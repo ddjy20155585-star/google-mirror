@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Google 镜像站 · 通讯录</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Roboto', arial, sans-serif; }
+:root {
+  --bg: #fff; --text: #202124; --text-secondary: #5f6368;
+  --border: #dfe1e5; --hover: rgba(60,64,67,0.08); --card-bg: #fff;
+  --blue: #1a73e8;
+}
+body.dark {
+  --bg: #202124; --text: #e8eaed; --text-secondary: #9aa0a6;
+  --border: #5f6368; --hover: rgba(232,234,237,0.08); --card-bg: #292a2d;
+}
+body {
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; display: flex; flex-direction: column;
+  transition: background 0.4s, color 0.4s;
+}
+.top-bar {
+  display: flex; align-items: center; gap: 16px;
+  padding: 14px 30px; border-bottom: 1px solid var(--border);
+  background: var(--bg); position: sticky; top: 0; z-index: 100;
+}
+.logo-mini { display: flex; align-items: center; height: 28px; cursor: pointer; }
+.logo-mini svg { height: 28px; width: auto; }
+.page-title {
+  font-size: 20px; font-weight: 500;
+  display: flex; align-items: center; gap: 6px;
+}
+.page-title .material-icons-outlined { font-size: 24px; color: var(--blue); }
+.top-spacer { flex: 1; }
+.search-input {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--card-bg); border: 1px solid var(--border);
+  border-radius: 20px; height: 40px; padding: 0 16px;
+  width: 100%; max-width: 360px;
+  transition: box-shadow 0.15s;
+}
+.search-input:focus-within {
+  box-shadow: 0 1px 6px rgba(32,33,36,0.2);
+  border-color: transparent;
+}
+.search-input .material-icons-outlined { font-size: 20px; color: var(--text-secondary); }
+.search-input input {
+  flex: 1; border: none; outline: none; background: transparent;
+  font-size: 14px; color: var(--text); height: 100%;
+}
+.user-badge {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 12px; border-radius: 20px;
+  background: var(--hover); cursor: pointer;
+}
+.user-badge img { width: 26px; height: 26px; border-radius: 50%; }
+.user-badge .name { font-size: 13px; font-weight: 500; }
+.theme-toggle {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: transparent; border: none;
+  color: var(--text-secondary); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.theme-toggle:hover { background: var(--hover); }
+.main { flex: 1; padding: 30px; max-width: 1000px; width: 100%; margin: 0 auto; }
+.toolbar {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 24px; flex-wrap: wrap;
+}
+.btn-secondary {
+  background: transparent; color: var(--text-secondary);
+  border: 1px solid var(--border);
+  padding: 9px 16px; border-radius: 6px;
+  font-size: 14px; cursor: pointer;
+  display: flex; align-items: center; gap: 6px;
+}
+.btn-secondary:hover { background: var(--hover); color: var(--text); }
+.count-info { margin-left: auto; font-size: 13px; color: var(--text-secondary); }
+.contact-list { display: flex; flex-direction: column; gap: 8px; }
+.contact-item {
+  display: flex; align-items: center; gap: 16px;
+  padding: 12px 18px;
+  background: var(--card-bg); border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  transition: transform 0.15s;
+  opacity: 0; animation: fadeUp 0.3s ease forwards;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.contact-item:hover { transform: translateX(2px); }
+.contact-avatar {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: var(--blue); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 500;
+  flex-shrink: 0; overflow: hidden;
+}
+.contact-avatar img {
+  width: 100%; height: 100%; object-fit: cover;
+}
+.contact-info { flex: 1; min-width: 0; }
+.contact-name {
+  font-size: 15px; font-weight: 500; color: var(--text);
+  margin-bottom: 4px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.contact-detail {
+  font-size: 13px; color: var(--text-secondary);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.contact-detail .material-icons-outlined {
+  font-size: 14px; vertical-align: middle; margin-right: 4px;
+}
+.contact-detail + .contact-detail { margin-top: 2px; }
+.empty-state {
+  padding: 60px 20px; text-align: center;
+  color: var(--text-secondary); font-size: 14px;
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+}
+.empty-state .material-icons-outlined { font-size: 48px; opacity: 0.5; }
+.loading { text-align: center; padding: 60px 20px; color: var(--text-secondary); font-size: 14px; }
+.spinner {
+  width: 36px; height: 36px; margin: 0 auto 14px;
+  border: 3px solid var(--hover); border-top-color: var(--blue);
+  border-radius: 50%; animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.toast {
+  position: fixed; bottom: 30px; left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: #202124; color: #fff;
+  padding: 12px 24px; border-radius: 8px;
+  font-size: 14px; z-index: 10000;
+  opacity: 0; pointer-events: none; transition: all 0.3s;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.error { background: #d93025; }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="logo-mini" onclick="location.href='index.html'">
+    <svg viewBox="0 0 272 92" xmlns="http://www.w3.org/2000/svg">
+      <path fill="#4285F4" d="M115.75 47.18c0 12.77-9.99 22.18-22.25 22.18s-22.25-9.41-22.25-22.18C71.25 34.32 81.24 25 93.5 25s22.25 9.32 22.25 22.18zm-9.74 0c0-7.98-5.79-13.44-12.51-13.44S80.99 39.2 80.99 47.18c0 7.9 5.79 13.44 12.51 13.44s12.51-5.55 12.51-13.44z"/>
+      <path fill="#EA4335" d="M163.75 47.18c0 12.77-9.99 22.18-22.25 22.18s-22.25-9.41-22.25-22.18c0-12.85 9.99-22.18 22.25-22.18s22.25 9.32 22.25 22.18zm-9.74 0c0-7.98-5.79-13.44-12.51-13.44s-12.51 5.46-12.51 13.44c0 7.9 5.79 13.44 12.51 13.44s12.51-5.55 12.51-13.44z"/>
+      <path fill="#FBBC05" d="M209.75 26.34v39.82c0 16.38-9.66 23.07-21.08 23.07-10.75 0-17.22-7.19-19.66-13.07l8.48-3.53c1.51 3.61 5.21 7.87 11.17 7.87 7.31 0 11.84-4.51 11.84-13v-3.19h-.34c-2.18 2.69-6.38 5.04-11.68 5.04-11.09 0-21.25-9.66-21.25-22.09 0-12.52 10.16-22.26 21.25-22.26 5.29 0 9.49 2.35 11.68 4.96h.34v-3.61h9.25zm-8.56 20.92c0-7.81-5.21-13.52-11.84-13.52-6.72 0-12.35 5.71-12.35 13.52 0 7.73 5.63 13.36 12.35 13.36 6.63 0 11.84-5.63 11.84-13.36z"/>
+      <path fill="#34A853" d="M225 3v65h-9.5V3h9.5z"/>
+      <path fill="#4285F4" d="M262.02 54.48l7.56 5.04c-2.44 3.61-8.32 9.83-18.48 9.83-12.6 0-22.01-9.74-22.01-22.18 0-13.19 9.49-22.18 20.92-22.18 11.51 0 17.14 9.16 18.98 14.11l1.01 2.52-29.65 12.28c2.27 4.45 5.8 6.72 10.75 6.72 4.96 0 8.4-2.44 10.92-6.14zm-23.27-7.98l19.82-8.23c-1.09-2.77-4.37-4.7-8.23-4.7-4.95 0-11.84 4.37-11.59 12.93z"/>
+      <path fill="#EA4335" d="M35.29 41.41V32H67c.31 1.64.47 3.58.47 5.68 0 7.06-1.93 15.79-8.15 22.01-6.05 6.3-13.78 9.66-24.02 9.66C16.32 69.35.36 53.89.36 34.91.36 15.93 16.32.47 35.3.47c10.5 0 17.98 4.12 23.6 9.49l-6.64 6.64c-4.03-3.78-9.49-6.72-16.97-6.72-13.86 0-24.7 11.17-24.7 25.03 0 13.86 10.84 25.03 24.7 25.03 8.99 0 14.11-3.61 17.39-6.89 2.66-2.66 4.41-6.46 5.1-11.65l-22.49.01z"/>
+    </svg>
+  </div>
+  <div class="page-title">
+    <span class="material-icons-outlined">contacts</span>
+    通讯录
+  </div>
+  <div class="top-spacer"></div>
+  <div class="search-input">
+    <span class="material-icons-outlined">search</span>
+    <input type="text" id="searchInput" placeholder="搜索联系人…" autocomplete="off">
+  </div>
+  <button class="theme-toggle" id="themeToggle" title="切换深色模式">
+    <span class="material-icons-outlined" id="themeIcon">dark_mode</span>
+  </button>
+  <div id="userArea"></div>
+</div>
+
+<div class="main" id="main"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function() {
+  // ========== 统一 Token 模式 ==========
+  const STORAGE_TOKEN = 'gm_token';
+  const STORAGE_USER = 'gm_user';
+  const STORAGE_THEME = 'gm_theme';
+
+  function safeGet(key, def) {
+    try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : def; }
+    catch(e) { return def; }
+  }
+  function safeSet(key, val) {
+    try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {}
+  }
+  function safeRemove(key) {
+    try { localStorage.removeItem(key); } catch(e) {}
+  }
+  function requireToken() {
+    const token = safeGet(STORAGE_TOKEN, null);
+    if (!token) {
+      const next = location.pathname.split('/').pop() || 'index.html';
+      location.href = 'auth.html?next=' + encodeURIComponent(next);
+      return null;
+    }
+    return token;
+  }
+  function loadUser() { return safeGet(STORAGE_USER, null); }
+  function signOut() {
+    safeRemove(STORAGE_TOKEN);
+    safeRemove(STORAGE_USER);
+    safeRemove('gm_token_time');
+    location.href = 'auth.html';
+  }
+
+  const accessToken = requireToken();
+  if (!accessToken) return;
+  const currentUser = loadUser();
+
+  // ========== 元素 ==========
+  const $ = id => document.getElementById(id);
+  const main = $('main');
+  const userArea = $('userArea');
+  const themeToggle = $('themeToggle');
+  const themeIcon = $('themeIcon');
+  const searchInput = $('searchInput');
+  const toast = $('toast');
+
+  let allContacts = [];
+
+  // ========== 工具 ==========
+  function toastMsg(msg, type = '') {
+    toast.textContent = msg;
+    toast.className = 'toast show ' + type;
+    setTimeout(() => toast.className = 'toast ' + type, 2500);
+  }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[c]);
+  }
+  function getInitial(name) {
+    if (!name) return '?';
+    const trimmed = name.trim();
+    return trimmed.charAt(0).toUpperCase();
+  }
+  function getColorFor(name) {
+    // 根据名字生成稳定的颜色
+    const colors = ['#4285F4', '#EA4335', '#FBBC04', '#34A853', '#9B72F2', '#E91E63', '#00ACC1', '#FF7043'];
+    if (!name) return colors[0];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    return colors[Math.abs(hash) % colors.length];
+  }
+
+  // ========== 深色模式 ==========
+  function applyTheme(t) {
+    if (t === 'dark') { document.body.classList.add('dark'); themeIcon.textContent = 'light_mode'; }
+    else { document.body.classList.remove('dark'); themeIcon.textContent = 'dark_mode'; }
+  }
+  applyTheme(safeGet(STORAGE_THEME, 'light'));
+  themeToggle.addEventListener('click', () => {
+    const t = document.body.classList.contains('dark') ? 'light' : 'dark';
+    applyTheme(t);
+    safeSet(STORAGE_THEME, t);
+  });
+
+  // ========== 用户徽章 ==========
+  function renderUserBadge() {
+    if (!currentUser) { userArea.innerHTML = ''; return; }
+    userArea.innerHTML = `
+      <div class="user-badge" id="userBadge" title="点击退出">
+        <img src="${escapeHtml(currentUser.picture || '')}" alt="">
+        <span class="name">${escapeHtml(currentUser.name || currentUser.email || '')}</span>
+      </div>
+    `;
+    $('userBadge').addEventListener('click', () => {
+      if (confirm('退出登录？')) signOut();
+    });
+  }
+
+  // ========== People API ==========
+  async function apiRequest(url, options = {}) {
+    options.headers = options.headers || {};
+    options.headers['Authorization'] = 'Bearer ' + accessToken;
+    const res = await fetch(url, options);
+    if (res.status === 401) {
+      toastMsg('登录已过期，请重新登录', 'error');
+      setTimeout(signOut, 1000);
+      throw new Error('unauthorized');
+    }
+    return res;
+  }
+
+  async function fetchAllContacts() {
+    const all = [];
+    let pageToken = '';
+    const limit = 1000; // 最多 1000 个（1000/100 = 10 页）
+
+    for (let i = 0; i < 10; i++) {
+      let url = 'https://people.googleapis.com/v1/people/me/connections?' +
+        'pageSize=100&' +
+        'personFields=names,emailAddresses,phoneNumbers,photos,organizations&' +
+        'sortOrder=LAST_MODIFIED_DESCENDING';
+      if (pageToken) url += '&pageToken=' + encodeURIComponent(pageToken);
+
+      const res = await apiRequest(url);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error?.message || ('HTTP ' + res.status));
+      }
+      const data = await res.json();
+      (data.connections || []).forEach(c => all.push(c));
+      pageToken = data.nextPageToken || '';
+      if (!pageToken) break;
+    }
+    return all;
+  }
+
+  function normalizeContact(c) {
+    const name = (c.names && c.names[0] && c.names[0].displayName) || '';
+    const email = (c.emailAddresses && c.emailAddresses[0] && c.emailAddresses[0].value) || '';
+    const phone = (c.phoneNumbers && c.phoneNumbers[0] && c.phoneNumbers[0].value) || '';
+    const photo = (c.photos && c.photos[0] && c.photos[0].url) || '';
+    const org = (c.organizations && c.organizations[0] &&
+      (c.organizations[0].title || c.organizations[0].name)) || '';
+    return { name, email, phone, photo, org };
+  }
+
+  // ========== 渲染 ==========
+  function renderUI() {
+    main.innerHTML = `
+      <div class="toolbar">
+        <button class="btn-secondary" id="refreshBtn">
+          <span class="material-icons-outlined">refresh</span>
+          刷新
+        </button>
+        <div class="count-info" id="countInfo"></div>
+      </div>
+      <div class="contact-list" id="contactList">
+        <div class="loading"><div class="spinner"></div>加载中…</div>
+      </div>
+    `;
+    $('refreshBtn').addEventListener('click', loadContacts);
+    loadContacts();
+  }
+
+  async function loadContacts() {
+    const list = $('contactList');
+    if (!list) return;
+    list.innerHTML = '<div class="loading"><div class="spinner"></div>加载中…</div>';
+    try {
+      const raw = await fetchAllContacts();
+      allContacts = raw.map(normalizeContact).filter(c => c.name || c.email || c.phone);
+      renderContacts(allContacts);
+    } catch(e) {
+      list.innerHTML = `<div class="empty-state">加载失败：${escapeHtml(e.message)}</div>`;
+    }
+  }
+
+  function renderContacts(contacts) {
+    const list = $('contactList');
+    if (!list) return;
+    const countEl = $('countInfo');
+    if (countEl) countEl.textContent = `共 ${contacts.length} 个联系人`;
+
+    if (contacts.length === 0) {
+      list.innerHTML = `
+        <div class="empty-state">
+          <span class="material-icons-outlined">person_off</span>
+          <div>没有找到联系人</div>
+        </div>
+      `;
+      return;
+    }
+
+    list.innerHTML = '';
+    contacts.forEach((c, i) => {
+      const item = document.createElement('div');
+      item.className = 'contact-item';
+      item.style.animationDelay = (i * 15) + 'ms';
+
+      let avatarHtml;
+      if (c.photo) {
+        avatarHtml = `<img src="${escapeHtml(c.photo)}" alt="" onerror="this.outerHTML='<span>${escapeHtml(getInitial(c.name))}</span>'">`;
+      } else {
+        avatarHtml = `<span>${escapeHtml(getInitial(c.name))}</span>`;
+      }
+
+      const details = [];
+      if (c.email) details.push(`<div class="contact-detail"><span class="material-icons-outlined">mail_outline</span>${escapeHtml(c.email)}</div>`);
+      if (c.phone) details.push(`<div class="contact-detail"><span class="material-icons-outlined">phone</span>${escapeHtml(c.phone)}</div>`);
+      if (c.org) details.push(`<div class="contact-detail"><span class="material-icons-outlined">work_outline</span>${escapeHtml(c.org)}</div>`);
+
+      item.innerHTML = `
+        <div class="contact-avatar" style="background:${getColorFor(c.name)}">${avatarHtml}</div>
+        <div class="contact-info">
+          <div class="contact-name">${escapeHtml(c.name || '（无名字）')}</div>
+          ${details.join('')}
+        </div>
+      `;
+      list.appendChild(item);
+    });
+  }
+
+  // 搜索过滤
+  searchInput.addEventListener('input', () => {
+    const q = searchInput.value.trim().toLowerCase();
+    if (!q) { renderContacts(allContacts); return; }
+    const filtered = allContacts.filter(c =>
+      (c.name || '').toLowerCase().includes(q) ||
+      (c.email || '').toLowerCase().includes(q) ||
+      (c.phone || '').toLowerCase().includes(q)
+    );
+    renderContacts(filtered);
+  });
+
+  // ========== 启动 ==========
+  renderUserBadge();
+  renderUI();
+})();
+</script>
+</body>
+</html>

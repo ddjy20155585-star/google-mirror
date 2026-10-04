@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google 镜像站 · YouTube</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Roboto', arial, sans-serif; }
+        :root {
+            --bg: #fff;
+            --text: #0f0f0f;
+            --text-secondary: #606060;
+            --border: #e5e5e5;
+            --hover: rgba(0,0,0,0.05);
+            --chip-bg: #f2f2f2;
+            --chip-hover: #e5e5e5;
+        }
+        body.dark {
+            --bg: #0f0f0f;
+            --text: #f1f1f1;
+            --text-secondary: #aaaaaa;
+            --border: #303030;
+            --hover: rgba(255,255,255,0.1);
+            --chip-bg: #272727;
+            --chip-hover: #3f3f3f;
+        }
+        body {
+            background: var(--bg); color: var(--text);
+            min-height: 100vh; display: flex; flex-direction: column;
+            transition: background 0.4s, color 0.4s;
+        }
+
+        /* ========== 顶部栏 ========== */
+        .top-bar {
+            display: flex; align-items: center; gap: 20px;
+            padding: 10px 24px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg); position: sticky; top: 0; z-index: 100;
+            transition: background 0.4s, border-color 0.4s;
+        }
+        .logo-youtube {
+            display: flex; align-items: center; gap: 6px;
+            cursor: pointer; user-select: none; flex-shrink: 0;
+        }
+        .logo-youtube .yt-icon {
+            width: 32px; height: 22px;
+            background: #FF0000;
+            border-radius: 6px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .logo-youtube .yt-icon::after {
+            content: '';
+            display: block;
+            border-style: solid;
+            border-width: 5px 0 5px 8px;
+            border-color: transparent transparent transparent #fff;
+            margin-left: 2px;
+        }
+        .logo-youtube .yt-text {
+            font-size: 20px; font-weight: 700;
+            letter-spacing: -0.5px; color: var(--text);
+        }
+
+        .search-box {
+            flex: 1; max-width: 640px;
+            display: flex; align-items: center;
+            background: var(--bg); border: 1px solid var(--border);
+            border-radius: 20px; height: 40px; overflow: hidden;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .search-box:focus-within {
+            border-color: #1a73e8;
+            box-shadow: 0 0 0 1px #1a73e8;
+        }
+        .search-box input {
+            flex: 1; border: none; outline: none;
+            padding: 0 16px; font-size: 15px;
+            background: transparent; color: var(--text);
+        }
+        .search-box input::placeholder { color: var(--text-secondary); }
+        .search-box .search-btn {
+            width: 60px; height: 100%;
+            background: var(--chip-bg); border: none;
+            border-left: 1px solid var(--border);
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            color: var(--text-secondary);
+            transition: background 0.15s;
+        }
+        .search-box .search-btn:hover { background: var(--chip-hover); }
+
+        .theme-toggle {
+            width: 40px; height: 40px; border-radius: 50%;
+            background: transparent; border: none;
+            color: var(--text-secondary); cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+            transition: background 0.15s;
+        }
+        .theme-toggle:hover { background: var(--hover); }
+
+        /* ========== 分类 chips ========== */
+        .chips {
+            display: flex; gap: 12px;
+            padding: 12px 24px;
+            overflow-x: auto;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+            transition: background 0.4s, border-color 0.4s;
+        }
+        .chips::-webkit-scrollbar { display: none; }
+        .chip {
+            background: var(--chip-bg); color: var(--text);
+            border: none; border-radius: 8px;
+            padding: 6px 14px; font-size: 14px;
+            white-space: nowrap; cursor: pointer;
+            transition: background 0.15s, transform 0.15s;
+        }
+        .chip:hover { background: var(--chip-hover); }
+        .chip.active { background: #0f0f0f; color: #fff; }
+        body.dark .chip.active { background: #f1f1f1; color: #0f0f0f; }
+
+        /* ========== 主内容 ========== */
+        .container {
+            flex: 1; padding: 24px;
+            max-width: 1400px; margin: 0 auto; width: 100%;
+        }
+
+        .status-text {
+            font-size: 14px; color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 24px 16px;
+        }
+
+        .video-card {
+            cursor: pointer;
+            opacity: 0;
+            animation: cardIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes cardIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .video-card .thumb-wrap {
+            position: relative; width: 100%; padding-bottom: 56.25%;
+            background: #ccc; border-radius: 12px; overflow: hidden;
+            transition: border-radius 0.2s, transform 0.2s;
+        }
+        .video-card:hover .thumb-wrap { border-radius: 0; }
+        .video-card .thumb {
+            position: absolute; inset: 0; width: 100%; height: 100%;
+            object-fit: cover;
+        }
+        .video-card .duration {
+            position: absolute; bottom: 8px; right: 8px;
+            background: rgba(0,0,0,0.8); color: #fff;
+            padding: 2px 6px; border-radius: 4px;
+            font-size: 12px; font-weight: 500;
+        }
+        .video-card .card-body {
+            display: flex; gap: 12px; margin-top: 12px;
+        }
+        .video-card .channel-avatar {
+            width: 36px; height: 36px; border-radius: 50%;
+            flex-shrink: 0; background: #ccc;
+        }
+        .video-card .info { flex: 1; min-width: 0; }
+        .video-card .title {
+            font-size: 14px; font-weight: 500;
+            line-height: 1.4; color: var(--text);
+            display: -webkit-box; -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical; overflow: hidden;
+        }
+        .video-card .meta {
+            font-size: 13px; color: var(--text-secondary);
+            margin-top: 4px; line-height: 1.4;
+        }
+
+        /* ========== 加载 / 错误 ========== */
+        .loading, .error, .empty {
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; padding: 80px 20px;
+            color: var(--text-secondary); font-size: 14px; gap: 16px;
+        }
+        .spinner {
+            width: 40px; height: 40px;
+            border: 4px solid var(--chip-bg);
+            border-top-color: #FF0000;
+            border-radius: 50%;
+            animation: spin 0.9s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ========== 播放弹窗 ========== */
+        .player-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+            display: none; z-index: 9999;
+            align-items: center; justify-content: center;
+            padding: 40px 20px;
+            opacity: 0; transition: opacity 0.25s;
+        }
+        .player-overlay.open { display: flex; opacity: 1; }
+        .player-box {
+            width: 100%; max-width: 1000px;
+            background: #000; border-radius: 12px;
+            overflow: hidden; position: relative;
+            animation: playerIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes playerIn {
+            from { transform: scale(0.92); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .player-box iframe {
+            width: 100%; aspect-ratio: 16/9;
+            display: block; border: none;
+        }
+        .player-close {
+            position: absolute; top: -50px; right: 0;
+            background: transparent; border: none;
+            color: #fff; cursor: pointer;
+            font-size: 28px; padding: 8px;
+            border-radius: 50%;
+        }
+        .player-close:hover { background: rgba(255,255,255,0.15); }
+
+        @media (max-width: 600px) {
+            .top-bar { gap: 10px; padding: 8px 12px; }
+            .logo-youtube .yt-text { display: none; }
+            .container { padding: 12px; }
+            .video-grid { gap: 20px 12px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-bar">
+        <div class="logo-youtube" onclick="location.href='index.html'" title="返回首页">
+            <div class="yt-icon"></div>
+            <div class="yt-text">YouTube</div>
+        </div>
+
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="搜索 YouTube 视频" autocomplete="off">
+            <button class="search-btn" id="searchBtn" title="搜索">
+                <span class="material-icons-outlined">search</span>
+            </button>
+        </div>
+
+        <button class="theme-toggle" id="themeToggle" title="切换深色模式">
+            <span class="material-icons-outlined" id="themeIcon">dark_mode</span>
+        </button>
+    </div>
+
+    <div class="chips" id="chips">
+        <button class="chip active" data-q="热门音乐">音乐</button>
+        <button class="chip" data-q="搞笑视频">搞笑</button>
+        <button class="chip" data-q="美食">美食</button>
+        <button class="chip" data-q="科技评测">科技</button>
+        <button class="chip" data-q="旅行 vlog">旅行</button>
+        <button class="chip" data-q="电影解说">电影</button>
+        <button class="chip" data-q="游戏实况">游戏</button>
+        <button class="chip" data-q="新闻">新闻</button>
+        <button class="chip" data-q="学习">学习</button>
+    </div>
+
+    <div class="container">
+        <div id="status" class="status-text"></div>
+        <div id="content"></div>
+    </div>
+
+    <!-- 播放弹窗 -->
+    <div class="player-overlay" id="playerOverlay">
+        <div class="player-box">
+            <button class="player-close" id="playerClose">
+                <span class="material-icons-outlined">close</span>
+            </button>
+            <iframe id="playerFrame" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        // ★★★ 你的 YouTube API Key ★★★
+        const API_KEY = 'AIzaSyC662JLsUwD3ysHzxkbLalzENrkkSiCc1w';
+        const API_BASE = 'https://www.googleapis.com/youtube/v3/search';
+        const VIDEO_BASE = 'https://www.googleapis.com/youtube/v3/videos';
+        const CACHE_PREFIX = 'yt_cache_';
+        const CACHE_TTL = 24 * 60 * 60 * 1000;   // 24 小时
+
+        const $ = id => document.getElementById(id);
+        const searchInput = $('searchInput');
+        const searchBtn = $('searchBtn');
+        const content = $('content');
+        const status = $('status');
+        const chips = document.querySelectorAll('.chip');
+        const themeToggle = $('themeToggle');
+        const themeIcon = $('themeIcon');
+        const playerOverlay = $('playerOverlay');
+        const playerFrame = $('playerFrame');
+        const playerClose = $('playerClose');
+
+        // ==================== 深色模式 ====================
+        function applyTheme(theme) {
+            if (theme === 'dark') {
+                document.body.classList.add('dark');
+                themeIcon.textContent = 'light_mode';
+            } else {
+                document.body.classList.remove('dark');
+                themeIcon.textContent = 'dark_mode';
+            }
+        }
+        applyTheme(localStorage.getItem('yt_theme') || 'dark');
+        themeToggle.addEventListener('click', () => {
+            const isDark = document.body.classList.contains('dark');
+            const t = isDark ? 'light' : 'dark';
+            applyTheme(t);
+            localStorage.setItem('yt_theme', t);
+        });
+
+        // ==================== 工具函数 ====================
+        function formatDuration(iso) {
+            // PT1H2M3S → 1:02:03
+            const m = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+            if (!m) return '';
+            const h = parseInt(m[1] || 0);
+            const mm = parseInt(m[2] || 0);
+            const ss = parseInt(m[3] || 0);
+            const pad = n => String(n).padStart(2, '0');
+            return h > 0 ? `${h}:${pad(mm)}:${pad(ss)}` : `${mm}:${pad(ss)}`;
+        }
+        function formatViews(n) {
+            n = parseInt(n);
+            if (n >= 100000000) return (n / 100000000).toFixed(1) + '亿';
+            if (n >= 10000) return (n / 10000).toFixed(1) + '万';
+            if (n >= 1000) return (n / 1000).toFixed(1) + '千';
+            return n + '';
+        }
+        function formatTime(iso) {
+            const d = new Date(iso);
+            const now = new Date();
+            const diff = (now - d) / 1000;
+            if (diff < 3600) return Math.floor(diff / 60) + ' 分钟前';
+            if (diff < 86400) return Math.floor(diff / 3600) + ' 小时前';
+            if (diff < 2592000) return Math.floor(diff / 86400) + ' 天前';
+            if (diff < 31536000) return Math.floor(diff / 2592000) + ' 个月前';
+            return Math.floor(diff / 31536000) + ' 年前';
+        }
+        function escapeHtml(s) {
+            return String(s).replace(/[&<>"']/g, c => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            })[c]);
+        }
+
+        // ==================== 缓存 ====================
+        function getCache(key) {
+            try {
+                const raw = localStorage.getItem(CACHE_PREFIX + key);
+                if (!raw) return null;
+                const obj = JSON.parse(raw);
+                if (Date.now() - obj.t > CACHE_TTL) {
+                    localStorage.removeItem(CACHE_PREFIX + key);
+                    return null;
+                }
+                return obj.d;
+            } catch(e) { return null; }
+        }
+        function setCache(key, data) {
+            try {
+                localStorage.setItem(CACHE_PREFIX + key, JSON.stringify({
+                    t: Date.now(),
+                    d: data
+                }));
+            } catch(e) {}
+        }
+
+        // ==================== 搜索 ====================
+        async function searchVideos(query) {
+            if (!query) return;
+
+            // 先看缓存
+            const cached = getCache(query);
+            if (cached) {
+                renderVideos(cached, query, true);
+                return;
+            }
+
+            // 显示加载中
+            content.innerHTML = '<div class="loading"><div class="spinner"></div><div>正在搜索…</div></div>';
+            status.textContent = '';
+
+            try {
+                // 第一步：搜索
+                const searchUrl = `${API_BASE}?part=snippet&type=video&maxResults=20&q=${encodeURIComponent(query)}&key=${API_KEY}&hl=zh-CN&regionCode=CN`;
+                const searchRes = await fetch(searchUrl);
+                if (!searchRes.ok) {
+                    const err = await searchRes.json().catch(() => ({}));
+                    throw new Error(err.error?.message || `搜索失败 (${searchRes.status})`);
+                }
+                const searchData = await searchRes.json();
+                const items = searchData.items || [];
+                if (items.length === 0) {
+                    content.innerHTML = '<div class="empty"><span class="material-icons-outlined" style="font-size:48px;">search_off</span><div>没有找到相关视频</div></div>';
+                    return;
+                }
+
+                // 第二步：获取视频详情（时长、播放量）
+                const videoIds = items.map(it => it.id.videoId).filter(Boolean).join(',');
+                const detailUrl = `${VIDEO_BASE}?part=contentDetails,statistics&id=${videoIds}&key=${API_KEY}`;
+                const detailRes = await fetch(detailUrl);
+                const detailData = await detailRes.json();
+                const detailMap = {};
+                (detailData.items || []).forEach(v => {
+                    detailMap[v.id] = v;
+                });
+
+                // 合并数据
+                const videos = items.map(it => {
+                    const vid = it.id.videoId;
+                    const detail = detailMap[vid] || {};
+                    return {
+                        id: vid,
+                        title: it.snippet.title,
+                        channel: it.snippet.channelTitle,
+                        channelId: it.snippet.channelId,
+                        publishedAt: it.snippet.publishedAt,
+                        thumbnail: it.snippet.thumbnails?.medium?.url || it.snippet.thumbnails?.default?.url,
+                        duration: detail.contentDetails?.duration || '',
+                        views: detail.statistics?.viewCount || '0'
+                    };
+                });
+
+                // 缓存
+                setCache(query, videos);
+                renderVideos(videos, query, false);
+            } catch (e) {
+                console.error(e);
+                content.innerHTML = `<div class="error">
+                    <span class="material-icons-outlined" style="font-size:48px;color:#d93025;">error_outline</span>
+                    <div>加载失败：${escapeHtml(e.message)}</div>
+                    <div style="font-size:12px;color:var(--text-secondary);max-width:500px;text-align:center;line-height:1.6;">
+                        可能是 API 配额用完（每天 10000 单位，搜索一次消耗 100），或网络无法访问 <code>googleapis.com</code>，或 API Key 被限制。
+                    </div>
+                </div>`;
+            }
+        }
+
+        // ==================== 渲染 ====================
+        function renderVideos(videos, query, fromCache) {
+            status.textContent = `找到 ${videos.length} 个视频${fromCache ? '（来自缓存）' : ''}`;
+            content.innerHTML = '';
+            const grid = document.createElement('div');
+            grid.className = 'video-grid';
+
+            videos.forEach((v, i) => {
+                const card = document.createElement('div');
+                card.className = 'video-card';
+                card.style.animationDelay = (i * 30) + 'ms';
+                card.innerHTML = `
+                    <div class="thumb-wrap">
+                        <img class="thumb" src="${escapeHtml(v.thumbnail)}" alt="" loading="lazy">
+                        ${v.duration ? `<div class="duration">${formatDuration(v.duration)}</div>` : ''}
+                    </div>
+                    <div class="card-body">
+                        <div class="channel-avatar"></div>
+                        <div class="info">
+                            <div class="title">${escapeHtml(v.title)}</div>
+                            <div class="meta">${escapeHtml(v.channel)}</div>
+                            <div class="meta">${formatViews(v.views)} 次观看 · ${formatTime(v.publishedAt)}</div>
+                        </div>
+                    </div>
+                `;
+                card.addEventListener('click', () => openPlayer(v.id));
+                grid.appendChild(card);
+            });
+            content.appendChild(grid);
+        }
+
+        // ==================== 播放 ====================
+        function openPlayer(videoId) {
+            playerFrame.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`;
+            playerOverlay.classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+        function closePlayer() {
+            playerOverlay.classList.remove('open');
+            playerFrame.src = '';
+            document.body.style.overflow = '';
+        }
+        playerClose.addEventListener('click', closePlayer);
+        playerOverlay.addEventListener('click', (e) => {
+            if (e.target === playerOverlay) closePlayer();
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && playerOverlay.classList.contains('open')) closePlayer();
+        });
+
+        // ==================== 事件绑定 ====================
+        searchBtn.addEventListener('click', () => {
+            searchVideos(searchInput.value.trim());
+        });
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') searchVideos(searchInput.value.trim());
+        });
+        chips.forEach(chip => {
+            chip.addEventListener('click', () => {
+                chips.forEach(c => c.classList.remove('active'));
+                chip.classList.add('active');
+                const q = chip.dataset.q;
+                searchInput.value = q;
+                searchVideos(q);
+            });
+        });
+
+        // ==================== 初始加载 ====================
+        searchVideos('热门音乐');
+    })();
+    </script>
+</body>
+</html>

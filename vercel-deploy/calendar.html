@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Google 镜像站 · 日历</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Roboto', arial, sans-serif; }
+:root {
+  --bg: #fff; --text: #202124; --text-secondary: #5f6368;
+  --border: #dfe1e5; --hover: rgba(60,64,67,0.08); --card-bg: #fff;
+  --blue: #1a73e8; --green: #34a853; --red: #ea4335; --yellow: #fbbc04;
+}
+body.dark {
+  --bg: #202124; --text: #e8eaed; --text-secondary: #9aa0a6;
+  --border: #5f6368; --hover: rgba(232,234,237,0.08); --card-bg: #292a2d;
+}
+body {
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; display: flex; flex-direction: column;
+  transition: background 0.4s, color 0.4s;
+}
+.top-bar {
+  display: flex; align-items: center; gap: 16px;
+  padding: 14px 30px; border-bottom: 1px solid var(--border);
+  background: var(--bg); position: sticky; top: 0; z-index: 100;
+}
+.logo-mini { display: flex; align-items: center; height: 28px; cursor: pointer; }
+.logo-mini svg { height: 28px; width: auto; }
+.page-title {
+  font-size: 20px; font-weight: 500;
+  display: flex; align-items: center; gap: 6px;
+}
+.page-title .material-icons-outlined { font-size: 24px; color: var(--blue); }
+.top-spacer { flex: 1; }
+.user-badge {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 12px; border-radius: 20px;
+  background: var(--hover); cursor: pointer;
+}
+.user-badge img { width: 26px; height: 26px; border-radius: 50%; }
+.user-badge .name { font-size: 13px; font-weight: 500; }
+.theme-toggle {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: transparent; border: none;
+  color: var(--text-secondary); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.theme-toggle:hover { background: var(--hover); }
+.main { flex: 1; padding: 30px; max-width: 900px; width: 100%; margin: 0 auto; }
+.toolbar {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 24px; flex-wrap: wrap;
+}
+.btn-primary {
+  background: var(--blue); color: #fff;
+  border: none; padding: 9px 18px; border-radius: 6px;
+  font-size: 14px; font-weight: 500;
+  cursor: pointer; display: flex; align-items: center; gap: 6px;
+}
+.btn-primary:hover { background: #1b66c9; }
+.btn-secondary {
+  background: transparent; color: var(--text-secondary);
+  border: 1px solid var(--border);
+  padding: 9px 16px; border-radius: 6px;
+  font-size: 14px; cursor: pointer;
+  display: flex; align-items: center; gap: 6px;
+}
+.btn-secondary:hover { background: var(--hover); color: var(--text); }
+.time-range { margin-left: auto; font-size: 13px; color: var(--text-secondary); }
+.event-list { display: flex; flex-direction: column; gap: 12px; }
+.event-card {
+  display: flex; gap: 16px; padding: 16px;
+  background: var(--card-bg); border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  border-left: 4px solid var(--blue);
+  opacity: 0; animation: fadeUp 0.35s ease forwards;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.event-date {
+  flex-shrink: 0; width: 70px; text-align: center;
+  padding: 6px 0; border-right: 1px solid var(--border);
+}
+.event-date .day { font-size: 24px; font-weight: 500; color: var(--blue); line-height: 1; }
+.event-date .month {
+  font-size: 11px; color: var(--text-secondary);
+  text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px;
+}
+.event-date .weekday { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+.event-info { flex: 1; min-width: 0; }
+.event-title {
+  font-size: 15px; font-weight: 500; color: var(--text);
+  margin-bottom: 4px; word-break: break-word;
+}
+.event-time {
+  font-size: 13px; color: var(--text-secondary);
+  display: flex; align-items: center; gap: 4px;
+}
+.event-time .material-icons-outlined { font-size: 16px; }
+.event-location {
+  font-size: 13px; color: var(--text-secondary);
+  margin-top: 4px; display: flex; align-items: center; gap: 4px;
+}
+.event-location .material-icons-outlined { font-size: 16px; }
+.event-desc {
+  font-size: 13px; color: var(--text); margin-top: 8px; line-height: 1.5;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.event-actions { flex-shrink: 0; display: flex; align-items: flex-start; }
+.event-actions button {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: transparent; border: none;
+  color: var(--text-secondary); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s, color 0.15s;
+}
+.event-actions button:hover { background: #fce8e6; color: var(--red); }
+.empty-state {
+  padding: 60px 20px; text-align: center;
+  color: var(--text-secondary); font-size: 14px;
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+}
+.empty-state .material-icons-outlined { font-size: 48px; opacity: 0.5; }
+.loading { text-align: center; padding: 60px 20px; color: var(--text-secondary); font-size: 14px; }
+.spinner {
+  width: 36px; height: 36px; margin: 0 auto 14px;
+  border: 3px solid var(--hover); border-top-color: var(--blue);
+  border-radius: 50%; animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+  display: none; align-items: center; justify-content: center;
+  z-index: 9999; opacity: 0; transition: opacity 0.25s;
+}
+.modal-overlay.open { display: flex; opacity: 1; }
+.modal {
+  background: var(--card-bg); border-radius: 16px;
+  padding: 28px; width: 100%; max-width: 480px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+  transform: scale(0.9); transition: transform 0.25s;
+  max-height: 90vh; overflow-y: auto;
+}
+.modal-overlay.open .modal { transform: scale(1); }
+.modal h3 { font-size: 18px; margin-bottom: 20px; }
+.modal label {
+  display: block; font-size: 13px; color: var(--text-secondary);
+  margin-bottom: 6px; margin-top: 14px;
+}
+.modal input, .modal textarea {
+  width: 100%; padding: 10px 12px; font-size: 14px;
+  border: 1px solid var(--border); border-radius: 6px;
+  background: var(--bg); color: var(--text);
+  outline: none; transition: border-color 0.15s;
+  font-family: inherit;
+}
+.modal input:focus, .modal textarea:focus { border-color: var(--blue); }
+.modal textarea { resize: vertical; min-height: 60px; }
+.modal-actions {
+  display: flex; gap: 8px; justify-content: flex-end; margin-top: 24px;
+}
+.modal-actions button {
+  padding: 9px 18px; border-radius: 6px;
+  font-size: 14px; cursor: pointer; border: none;
+}
+.modal-actions .cancel {
+  background: transparent; color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+.modal-actions .confirm { background: var(--blue); color: #fff; }
+.modal-actions .confirm:hover { background: #1b66c9; }
+.toast {
+  position: fixed; bottom: 30px; left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: #202124; color: #fff;
+  padding: 12px 24px; border-radius: 8px;
+  font-size: 14px; z-index: 10000;
+  opacity: 0; pointer-events: none; transition: all 0.3s;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.success { background: #1e8e3e; }
+.toast.error { background: #d93025; }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="logo-mini" onclick="location.href='index.html'">
+    <svg viewBox="0 0 272 92" xmlns="http://www.w3.org/2000/svg">
+      <path fill="#4285F4" d="M115.75 47.18c0 12.77-9.99 22.18-22.25 22.18s-22.25-9.41-22.25-22.18C71.25 34.32 81.24 25 93.5 25s22.25 9.32 22.25 22.18zm-9.74 0c0-7.98-5.79-13.44-12.51-13.44S80.99 39.2 80.99 47.18c0 7.9 5.79 13.44 12.51 13.44s12.51-5.55 12.51-13.44z"/>
+      <path fill="#EA4335" d="M163.75 47.18c0 12.77-9.99 22.18-22.25 22.18s-22.25-9.41-22.25-22.18c0-12.85 9.99-22.18 22.25-22.18s22.25 9.32 22.25 22.18zm-9.74 0c0-7.98-5.79-13.44-12.51-13.44s-12.51 5.46-12.51 13.44c0 7.9 5.79 13.44 12.51 13.44s12.51-5.55 12.51-13.44z"/>
+      <path fill="#FBBC05" d="M209.75 26.34v39.82c0 16.38-9.66 23.07-21.08 23.07-10.75 0-17.22-7.19-19.66-13.07l8.48-3.53c1.51 3.61 5.21 7.87 11.17 7.87 7.31 0 11.84-4.51 11.84-13v-3.19h-.34c-2.18 2.69-6.38 5.04-11.68 5.04-11.09 0-21.25-9.66-21.25-22.09 0-12.52 10.16-22.26 21.25-22.26 5.29 0 9.49 2.35 11.68 4.96h.34v-3.61h9.25zm-8.56 20.92c0-7.81-5.21-13.52-11.84-13.52-6.72 0-12.35 5.71-12.35 13.52 0 7.73 5.63 13.36 12.35 13.36 6.63 0 11.84-5.63 11.84-13.36z"/>
+      <path fill="#34A853" d="M225 3v65h-9.5V3h9.5z"/>
+      <path fill="#4285F4" d="M262.02 54.48l7.56 5.04c-2.44 3.61-8.32 9.83-18.48 9.83-12.6 0-22.01-9.74-22.01-22.18 0-13.19 9.49-22.18 20.92-22.18 11.51 0 17.14 9.16 18.98 14.11l1.01 2.52-29.65 12.28c2.27 4.45 5.8 6.72 10.75 6.72 4.96 0 8.4-2.44 10.92-6.14zm-23.27-7.98l19.82-8.23c-1.09-2.77-4.37-4.7-8.23-4.7-4.95 0-11.84 4.37-11.59 12.93z"/>
+      <path fill="#EA4335" d="M35.29 41.41V32H67c.31 1.64.47 3.58.47 5.68 0 7.06-1.93 15.79-8.15 22.01-6.05 6.3-13.78 9.66-24.02 9.66C16.32 69.35.36 53.89.36 34.91.36 15.93 16.32.47 35.3.47c10.5 0 17.98 4.12 23.6 9.49l-6.64 6.64c-4.03-3.78-9.49-6.72-16.97-6.72-13.86 0-24.7 11.17-24.7 25.03 0 13.86 10.84 25.03 24.7 25.03 8.99 0 14.11-3.61 17.39-6.89 2.66-2.66 4.41-6.46 5.1-11.65l-22.49.01z"/>
+    </svg>
+  </div>
+  <div class="page-title">
+    <span class="material-icons-outlined">calendar_today</span>
+    日历
+  </div>
+  <div class="top-spacer"></div>
+  <button class="theme-toggle" id="themeToggle" title="切换深色模式">
+    <span class="material-icons-outlined" id="themeIcon">dark_mode</span>
+  </button>
+  <div id="userArea"></div>
+</div>
+
+<div class="main" id="main"></div>
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h3>新建日程</h3>
+    <label>标题</label>
+    <input type="text" id="evTitle" placeholder="例如：开会">
+    <label>开始时间</label>
+    <input type="datetime-local" id="evStart">
+    <label>结束时间</label>
+    <input type="datetime-local" id="evEnd">
+    <label>地点（可选）</label>
+    <input type="text" id="evLocation" placeholder="例如：会议室">
+    <label>描述（可选）</label>
+    <textarea id="evDesc" placeholder="添加描述…"></textarea>
+    <div class="modal-actions">
+      <button class="cancel" id="modalCancel">取消</button>
+      <button class="confirm" id="modalConfirm">保存</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function() {
+  // ========== 统一 Token 模式 ==========
+  const STORAGE_TOKEN = 'gm_token';
+  const STORAGE_USER = 'gm_user';
+  const STORAGE_THEME = 'gm_theme';
+
+  function safeGet(key, def) {
+    try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : def; }
+    catch(e) { return def; }
+  }
+  function safeSet(key, val) {
+    try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {}
+  }
+  function safeRemove(key) {
+    try { localStorage.removeItem(key); } catch(e) {}
+  }
+  function requireToken() {
+    const token = safeGet(STORAGE_TOKEN, null);
+    if (!token) {
+      const next = location.pathname.split('/').pop() || 'index.html';
+      location.href = 'auth.html?next=' + encodeURIComponent(next);
+      return null;
+    }
+    return token;
+  }
+  function loadUser() { return safeGet(STORAGE_USER, null); }
+  function signOut() {
+    safeRemove(STORAGE_TOKEN);
+    safeRemove(STORAGE_USER);
+    safeRemove('gm_token_time');
+    location.href = 'auth.html';
+  }
+
+  const accessToken = requireToken();
+  if (!accessToken) return;
+  const currentUser = loadUser();
+
+  // ========== 元素 ==========
+  const $ = id => document.getElementById(id);
+  const main = $('main');
+  const userArea = $('userArea');
+  const themeToggle = $('themeToggle');
+  const themeIcon = $('themeIcon');
+  const toast = $('toast');
+  const modalOverlay = $('modalOverlay');
+  const evTitle = $('evTitle');
+  const evStart = $('evStart');
+  const evEnd = $('evEnd');
+  const evLocation = $('evLocation');
+  const evDesc = $('evDesc');
+
+  // ========== 工具 ==========
+  function toastMsg(msg, type = '') {
+    toast.textContent = msg;
+    toast.className = 'toast show ' + type;
+    setTimeout(() => toast.className = 'toast ' + type, 2500);
+  }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[c]);
+  }
+  function pad2(n) { return String(n).padStart(2, '0'); }
+
+  // ========== 深色模式 ==========
+  function applyTheme(t) {
+    if (t === 'dark') { document.body.classList.add('dark'); themeIcon.textContent = 'light_mode'; }
+    else { document.body.classList.remove('dark'); themeIcon.textContent = 'dark_mode'; }
+  }
+  applyTheme(safeGet(STORAGE_THEME, 'light'));
+  themeToggle.addEventListener('click', () => {
+    const t = document.body.classList.contains('dark') ? 'light' : 'dark';
+    applyTheme(t);
+    safeSet(STORAGE_THEME, t);
+  });
+
+  // ========== 用户徽章 ==========
+  function renderUserBadge() {
+    if (!currentUser) { userArea.innerHTML = ''; return; }
+    userArea.innerHTML = `
+      <div class="user-badge" id="userBadge" title="点击退出">
+        <img src="${escapeHtml(currentUser.picture || '')}" alt="">
+        <span class="name">${escapeHtml(currentUser.name || currentUser.email || '')}</span>
+      </div>
+    `;
+    $('userBadge').addEventListener('click', () => {
+      if (confirm('退出登录？')) signOut();
+    });
+  }
+
+  // ========== Calendar API ==========
+  async function apiRequest(url, options = {}) {
+    options.headers = options.headers || {};
+    options.headers['Authorization'] = 'Bearer ' + accessToken;
+    const res = await fetch(url, options);
+    if (res.status === 401) {
+      toastMsg('登录已过期，请重新登录', 'error');
+      setTimeout(signOut, 1000);
+      throw new Error('unauthorized');
+    }
+    return res;
+  }
+
+  async function getUpcomingEvents() {
+    const now = new Date().toISOString();
+    const url = 'https://www.googleapis.com/calendar/v3/calendars/primary/events?' +
+      'timeMin=' + encodeURIComponent(now) +
+      '&maxResults=20&singleEvents=true&orderBy=startTime';
+    const res = await apiRequest(url);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || ('HTTP ' + res.status));
+    }
+    const data = await res.json();
+    return data.items || [];
+  }
+
+  async function deleteEvent(eventId) {
+    const url = 'https://www.googleapis.com/calendar/v3/calendars/primary/events/' + eventId;
+    const res = await apiRequest(url, { method: 'DELETE' });
+    if (!res.ok && res.status !== 204) {
+      throw new Error('删除失败 HTTP ' + res.status);
+    }
+  }
+
+  async function createEvent(ev) {
+    const url = 'https://www.googleapis.com/calendar/v3/calendars/primary/events';
+    const res = await apiRequest(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(ev)
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || ('HTTP ' + res.status));
+    }
+    return res.json();
+  }
+
+  // ========== 渲染 ==========
+  function getEventDateInfo(dtStr) {
+    const d = new Date(dtStr);
+    const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+    const months = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+    return {
+      day: d.getDate(),
+      month: months[d.getMonth()],
+      weekday: weekdays[d.getDay()],
+      fullDate: `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`,
+      time: `${pad2(d.getHours())}:${pad2(d.getMinutes())}`
+    };
+  }
+
+  function formatEventTime(ev) {
+    const start = ev.start || {};
+    const end = ev.end || {};
+    if (start.date) return '全天';
+    if (start.dateTime && end.dateTime) {
+      const s = getEventDateInfo(start.dateTime);
+      const e = getEventDateInfo(end.dateTime);
+      return `${s.fullDate} ${s.time} - ${e.time}`;
+    }
+    if (start.dateTime) {
+      const s = getEventDateInfo(start.dateTime);
+      return `${s.fullDate} ${s.time}`;
+    }
+    return '';
+  }
+
+  function renderUI() {
+    main.innerHTML = `
+      <div class="toolbar">
+        <button class="btn-primary" id="addEventBtn">
+          <span class="material-icons-outlined">add</span>
+          新建日程
+        </button>
+        <button class="btn-secondary" id="refreshBtn">
+          <span class="material-icons-outlined">refresh</span>
+          刷新
+        </button>
+        <div class="time-range" id="timeRange"></div>
+      </div>
+      <div id="eventListContainer"></div>
+    `;
+    $('addEventBtn').addEventListener('click', openAddEvent);
+    $('refreshBtn').addEventListener('click', loadEvents);
+    loadEvents();
+  }
+
+  async function loadEvents() {
+    const container = $('eventListContainer');
+    if (!container) return;
+    container.innerHTML = '<div class="loading"><div class="spinner"></div>加载中…</div>';
+    try {
+      const items = await getUpcomingEvents();
+      const timeRange = $('timeRange');
+      if (timeRange) timeRange.textContent = `共 ${items.length} 个即将到来的日程`;
+      if (items.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <span class="material-icons-outlined">event_available</span>
+            <div>没有即将到来的日程</div>
+          </div>
+        `;
+        return;
+      }
+      container.innerHTML = '';
+      const list = document.createElement('div');
+      list.className = 'event-list';
+      items.forEach((ev, i) => {
+        const card = document.createElement('div');
+        card.className = 'event-card';
+        card.style.animationDelay = (i * 30) + 'ms';
+        const start = ev.start || {};
+        const startStr = start.date || start.dateTime || '';
+        const dateInfo = getEventDateInfo(startStr);
+        const location = ev.location || '';
+        const desc = ev.description || '';
+        const title = ev.summary || '（无标题）';
+        card.innerHTML = `
+          <div class="event-date">
+            <div class="day">${dateInfo.day}</div>
+            <div class="month">${dateInfo.month}</div>
+            <div class="weekday">${dateInfo.weekday}</div>
+          </div>
+          <div class="event-info">
+            <div class="event-title">${escapeHtml(title)}</div>
+            <div class="event-time">
+              <span class="material-icons-outlined">schedule</span>
+              ${escapeHtml(formatEventTime(ev))}
+            </div>
+            ${location ? `<div class="event-location">
+              <span class="material-icons-outlined">place</span>
+              ${escapeHtml(location)}
+            </div>` : ''}
+            ${desc ? `<div class="event-desc">${escapeHtml(desc)}</div>` : ''}
+          </div>
+          <div class="event-actions">
+            <button data-id="${escapeHtml(ev.id)}" title="删除">
+              <span class="material-icons-outlined" style="font-size:18px;">delete</span>
+            </button>
+          </div>
+        `;
+        card.querySelector('button').addEventListener('click', async () => {
+          if (!confirm('确定删除这个日程？')) return;
+          try {
+            await deleteEvent(ev.id);
+            toastMsg('已删除', 'success');
+            loadEvents();
+          } catch(e) {
+            toastMsg('删除失败：' + e.message, 'error');
+          }
+        });
+        list.appendChild(card);
+      });
+      container.appendChild(list);
+    } catch(e) {
+      container.innerHTML = `<div class="empty-state">加载失败：${escapeHtml(e.message)}</div>`;
+    }
+  }
+
+  function toLocalDatetimeString(d) {
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+  }
+
+  function openAddEvent() {
+    evTitle.value = '';
+    const start = new Date();
+    start.setHours(start.getHours() + 1, 0, 0, 0);
+    const end = new Date(start.getTime() + 60 * 60 * 1000);
+    evStart.value = toLocalDatetimeString(start);
+    evEnd.value = toLocalDatetimeString(end);
+    evLocation.value = '';
+    evDesc.value = '';
+    modalOverlay.classList.add('open');
+    evTitle.focus();
+  }
+
+  function closeModal() { modalOverlay.classList.remove('open'); }
+  $('modalCancel').addEventListener('click', closeModal);
+  modalOverlay.addEventListener('click', (e) => {
+    if (e.target === modalOverlay) closeModal();
+  });
+
+  $('modalConfirm').addEventListener('click', async () => {
+    const title = evTitle.value.trim();
+    const startVal = evStart.value;
+    const endVal = evEnd.value;
+    if (!title || !startVal || !endVal) {
+      toastMsg('标题、开始、结束时间必填', 'error');
+      return;
+    }
+    const startDate = new Date(startVal);
+    const endDate = new Date(endVal);
+    if (endDate <= startDate) {
+      toastMsg('结束时间必须晚于开始时间', 'error');
+      return;
+    }
+    const ev = {
+      summary: title,
+      start: { dateTime: startDate.toISOString() },
+      end: { dateTime: endDate.toISOString() }
+    };
+    const loc = evLocation.value.trim();
+    if (loc) ev.location = loc;
+    const desc = evDesc.value.trim();
+    if (desc) ev.description = desc;
+    try {
+      await createEvent(ev);
+      toastMsg('日程已创建', 'success');
+      closeModal();
+      loadEvents();
+    } catch(e) {
+      toastMsg('创建失败：' + e.message, 'error');
+    }
+  });
+
+  // ========== 启动 ==========
+  renderUserBadge();
+  renderUI();
+})();
+</script>
+</body>
+</html>

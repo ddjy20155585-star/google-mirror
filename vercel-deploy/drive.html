@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Google 镜像站 · 云端硬盘</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Roboto', arial, sans-serif; }
+:root {
+  --bg: #fff; --text: #202124; --text-secondary: #5f6368;
+  --border: #dfe1e5; --hover: rgba(60,64,67,0.08); --card-bg: #fff;
+  --blue: #1a73e8; --yellow: #fbbc04; --green: #34a853; --red: #ea4335;
+}
+body.dark {
+  --bg: #202124; --text: #e8eaed; --text-secondary: #9aa0a6;
+  --border: #5f6368; --hover: rgba(232,234,237,0.08); --card-bg: #292a2d;
+}
+body {
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; display: flex; flex-direction: column;
+  transition: background 0.4s, color 0.4s;
+}
+.top-bar {
+  display: flex; align-items: center; gap: 16px;
+  padding: 14px 30px; border-bottom: 1px solid var(--border);
+  background: var(--bg); position: sticky; top: 0; z-index: 100;
+}
+.logo-mini { display: flex; align-items: center; height: 30px; cursor: pointer; }
+.logo-mini svg { height: 30px; width: auto; }
+.page-title {
+  font-size: 22px; font-weight: 500;
+  display: flex; align-items: center; gap: 8px;
+}
+.page-title .material-icons-outlined { font-size: 26px; color: var(--yellow); }
+.top-spacer { flex: 1; }
+.user-badge {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 12px; border-radius: 20px;
+  background: var(--hover); cursor: pointer;
+}
+.user-badge img { width: 26px; height: 26px; border-radius: 50%; }
+.user-badge .name { font-size: 13px; font-weight: 500; }
+.theme-toggle {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: transparent; border: none;
+  color: var(--text-secondary); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.theme-toggle:hover { background: var(--hover); }
+.main { flex: 1; padding: 30px; max-width: 1100px; width: 100%; margin: 0 auto; }
+.toolbar {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 24px; flex-wrap: wrap;
+}
+.upload-btn {
+  background: var(--blue); color: #fff;
+  padding: 10px 20px; border-radius: 6px;
+  font-size: 14px; font-weight: 500;
+  border: none; cursor: pointer;
+  display: flex; align-items: center; gap: 6px;
+}
+.upload-btn:hover { background: #1b66c9; }
+.upload-btn:disabled { background: var(--border); cursor: not-allowed; }
+.refresh-btn {
+  background: transparent; color: var(--text-secondary);
+  border: 1px solid var(--border);
+  padding: 9px 16px; border-radius: 6px;
+  font-size: 14px; cursor: pointer;
+  display: flex; align-items: center; gap: 6px;
+}
+.refresh-btn:hover { background: var(--hover); color: var(--text); }
+.storage-info { margin-left: auto; font-size: 13px; color: var(--text-secondary); }
+.file-list-header {
+  display: grid; grid-template-columns: auto 1fr 140px 120px;
+  gap: 12px; padding: 10px 16px;
+  font-size: 12px; font-weight: 500; color: var(--text-secondary);
+  text-transform: uppercase; letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border);
+}
+.file-item {
+  display: grid; grid-template-columns: auto 1fr 140px 120px;
+  gap: 12px; align-items: center;
+  padding: 12px 16px; border-bottom: 1px solid var(--border);
+  border-radius: 8px; transition: background 0.15s;
+  opacity: 0; animation: fadeIn 0.3s ease forwards;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.file-item:hover { background: var(--hover); }
+.file-icon {
+  width: 36px; height: 36px; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; background: #4285f4;
+}
+.file-icon .material-icons-outlined { font-size: 22px; color: #fff; }
+.file-icon.folder { background: #fbbc04; }
+.file-icon.image { background: #34a853; }
+.file-icon.pdf { background: #ea4335; }
+.file-icon.text { background: #5f6368; }
+.file-name {
+  font-size: 14px; color: var(--text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  cursor: pointer;
+}
+.file-name:hover { text-decoration: underline; }
+.file-time, .file-size { font-size: 13px; color: var(--text-secondary); }
+.loading, .empty {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; padding: 60px 20px; gap: 16px;
+  color: var(--text-secondary); font-size: 14px;
+}
+.spinner {
+  width: 40px; height: 40px;
+  border: 4px solid var(--hover);
+  border-top-color: var(--blue);
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.toast {
+  position: fixed; bottom: 30px; left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: #202124; color: #fff;
+  padding: 12px 24px; border-radius: 8px;
+  font-size: 14px; z-index: 9999;
+  opacity: 0; pointer-events: none;
+  transition: all 0.3s;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.success { background: #1e8e3e; }
+.toast.error { background: #d93025; }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="logo-mini" onclick="location.href='index.html'">
+    <svg viewBox="0 0 272 92" xmlns="http://www.w3.org/2000/svg">
+      <path fill="#4285F4" d="M115.75 47.18c0 12.77-9.99 22.18-22.25 22.18s-22.25-9.41-22.25-22.18C71.25 34.32 81.24 25 93.5 25s22.25 9.32 22.25 22.18zm-9.74 0c0-7.98-5.79-13.44-12.51-13.44S80.99 39.2 80.99 47.18c0 7.9 5.79 13.44 12.51 13.44s12.51-5.55 12.51-13.44z"/>
+      <path fill="#EA4335" d="M163.75 47.18c0 12.77-9.99 22.18-22.25 22.18s-22.25-9.41-22.25-22.18c0-12.85 9.99-22.18 22.25-22.18s22.25 9.32 22.25 22.18zm-9.74 0c0-7.98-5.79-13.44-12.51-13.44s-12.51 5.46-12.51 13.44c0 7.9 5.79 13.44 12.51 13.44s12.51-5.55 12.51-13.44z"/>
+      <path fill="#FBBC05" d="M209.75 26.34v39.82c0 16.38-9.66 23.07-21.08 23.07-10.75 0-17.22-7.19-19.66-13.07l8.48-3.53c1.51 3.61 5.21 7.87 11.17 7.87 7.31 0 11.84-4.51 11.84-13v-3.19h-.34c-2.18 2.69-6.38 5.04-11.68 5.04-11.09 0-21.25-9.66-21.25-22.09 0-12.52 10.16-22.26 21.25-22.26 5.29 0 9.49 2.35 11.68 4.96h.34v-3.61h9.25zm-8.56 20.92c0-7.81-5.21-13.52-11.84-13.52-6.72 0-12.35 5.71-12.35 13.52 0 7.73 5.63 13.36 12.35 13.36 6.63 0 11.84-5.63 11.84-13.36z"/>
+      <path fill="#34A853" d="M225 3v65h-9.5V3h9.5z"/>
+      <path fill="#4285F4" d="M262.02 54.48l7.56 5.04c-2.44 3.61-8.32 9.83-18.48 9.83-12.6 0-22.01-9.74-22.01-22.18 0-13.19 9.49-22.18 20.92-22.18 11.51 0 17.14 9.16 18.98 14.11l1.01 2.52-29.65 12.28c2.27 4.45 5.8 6.72 10.75 6.72 4.96 0 8.4-2.44 10.92-6.14zm-23.27-7.98l19.82-8.23c-1.09-2.77-4.37-4.7-8.23-4.7-4.95 0-11.84 4.37-11.59 12.93z"/>
+      <path fill="#EA4335" d="M35.29 41.41V32H67c.31 1.64.47 3.58.47 5.68 0 7.06-1.93 15.79-8.15 22.01-6.05 6.3-13.78 9.66-24.02 9.66C16.32 69.35.36 53.89.36 34.91.36 15.93 16.32.47 35.3.47c10.5 0 17.98 4.12 23.6 9.49l-6.64 6.64c-4.03-3.78-9.49-6.72-16.97-6.72-13.86 0-24.7 11.17-24.7 25.03 0 13.86 10.84 25.03 24.7 25.03 8.99 0 14.11-3.61 17.39-6.89 2.66-2.66 4.41-6.46 5.1-11.65l-22.49.01z"/>
+    </svg>
+  </div>
+  <div class="page-title">
+    <span class="material-icons-outlined">add_to_drive</span>
+    云端硬盘
+  </div>
+  <div class="top-spacer"></div>
+  <button class="theme-toggle" id="themeToggle" title="切换深色模式">
+    <span class="material-icons-outlined" id="themeIcon">dark_mode</span>
+  </button>
+  <div id="userArea"></div>
+</div>
+
+<div class="main" id="main"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function() {
+  // ========== 统一 Token 模式 ==========
+  const STORAGE_TOKEN = 'gm_token';
+  const STORAGE_USER = 'gm_user';
+  const STORAGE_THEME = 'gm_theme';
+
+  function safeGet(key, def) {
+    try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : def; }
+    catch(e) { return def; }
+  }
+  function safeSet(key, val) {
+    try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {}
+  }
+  function safeRemove(key) {
+    try { localStorage.removeItem(key); } catch(e) {}
+  }
+
+  // 检查 token，没有就跳统一登录
+  function requireToken() {
+    const token = safeGet(STORAGE_TOKEN, null);
+    if (!token) {
+      const next = location.pathname.split('/').pop() || 'index.html';
+      location.href = 'auth.html?next=' + encodeURIComponent(next);
+      return null;
+    }
+    return token;
+  }
+  function loadUser() { return safeGet(STORAGE_USER, null); }
+  function signOut() {
+    safeRemove(STORAGE_TOKEN);
+    safeRemove(STORAGE_USER);
+    safeRemove('gm_token_time');
+    location.href = 'auth.html';
+  }
+
+  const accessToken = requireToken();
+  if (!accessToken) return;
+  const currentUser = loadUser();
+
+  // ========== 元素引用 ==========
+  const $ = id => document.getElementById(id);
+  const main = $('main');
+  const userArea = $('userArea');
+  const themeToggle = $('themeToggle');
+  const themeIcon = $('themeIcon');
+  const toast = $('toast');
+
+  // ========== 工具 ==========
+  function toastMsg(msg, type = '') {
+    toast.textContent = msg;
+    toast.className = 'toast show ' + type;
+    setTimeout(() => toast.className = 'toast ' + type, 2500);
+  }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[c]);
+  }
+  function formatSize(bytes) {
+    if (!bytes) return '—';
+    const u = ['B', 'KB', 'MB', 'GB']; let i = 0, n = parseInt(bytes);
+    while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; }
+    return n.toFixed(i === 0 ? 0 : 1) + ' ' + u[i];
+  }
+  function formatTime(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso), now = new Date(), diff = (now - d) / 1000;
+    if (diff < 3600) return Math.floor(diff / 60) + ' 分钟前';
+    if (diff < 86400) return Math.floor(diff / 3600) + ' 小时前';
+    if (diff < 2592000) return Math.floor(diff / 86400) + ' 天前';
+    return d.toLocaleDateString('zh-CN');
+  }
+  function getFileIcon(mimeType, name) {
+    const t = (mimeType || '').toLowerCase();
+    const n = (name || '').toLowerCase();
+    if (t.includes('folder')) return 'folder';
+    if (t.includes('image') || /\.(jpg|jpeg|png|gif|webp|svg)$/.test(n)) return 'image';
+    if (t.includes('pdf') || n.endsWith('.pdf')) return 'pdf';
+    if (t.includes('text') || /\.(txt|md|json|js|html|css)$/.test(n)) return 'text';
+    return 'default';
+  }
+
+  // ========== 深色模式 ==========
+  function applyTheme(t) {
+    if (t === 'dark') { document.body.classList.add('dark'); themeIcon.textContent = 'light_mode'; }
+    else { document.body.classList.remove('dark'); themeIcon.textContent = 'dark_mode'; }
+  }
+  applyTheme(safeGet(STORAGE_THEME, 'light'));
+  themeToggle.addEventListener('click', () => {
+    const t = document.body.classList.contains('dark') ? 'light' : 'dark';
+    applyTheme(t);
+    safeSet(STORAGE_THEME, t);
+  });
+
+  // ========== 用户徽章 ==========
+  function renderUserBadge() {
+    if (!currentUser) { userArea.innerHTML = ''; return; }
+    userArea.innerHTML = `
+      <div class="user-badge" id="userBadge" title="点击退出">
+        <img src="${escapeHtml(currentUser.picture || '')}" alt="">
+        <span class="name">${escapeHtml(currentUser.name || currentUser.email || '')}</span>
+      </div>
+    `;
+    $('userBadge').addEventListener('click', () => {
+      if (confirm('退出登录？')) signOut();
+    });
+  }
+
+  // ========== Drive API ==========
+  async function apiRequest(url, options = {}) {
+    options.headers = options.headers || {};
+    options.headers['Authorization'] = 'Bearer ' + accessToken;
+    const res = await fetch(url, options);
+    if (res.status === 401) {
+      toastMsg('登录已过期，请重新登录', 'error');
+      setTimeout(signOut, 1000);
+      throw new Error('unauthorized');
+    }
+    return res;
+  }
+
+  async function loadFiles() {
+    const container = $('fileListContainer');
+    if (!container) return;
+    container.innerHTML = '<div class="loading"><div class="spinner"></div>加载中…</div>';
+    try {
+      const url = 'https://www.googleapis.com/drive/v3/files?' +
+        'pageSize=100&' +
+        'q=' + encodeURIComponent('trashed=false') + '&' +
+        'fields=files(id,name,mimeType,size,modifiedTime)&' +
+        'orderBy=modifiedTime desc&' +
+        'spaces=drive';
+      const res = await apiRequest(url);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error?.message || ('HTTP ' + res.status));
+      }
+      const data = await res.json();
+      renderFiles(data.files || []);
+      updateStorageInfo(data.files || []);
+    } catch(e) {
+      container.innerHTML = `<div class="empty">加载失败：${escapeHtml(e.message)}</div>`;
+    }
+  }
+
+  function renderFiles(files) {
+    const c = $('fileListContainer');
+    if (!c) return;
+    if (!files || files.length === 0) {
+      c.innerHTML = `
+        <div class="empty">
+          <span class="material-icons-outlined" style="font-size:48px;">folder_open</span>
+          <div>还没有文件</div>
+        </div>
+      `;
+      return;
+    }
+    c.innerHTML = `
+      <div class="file-list-header">
+        <div></div><div>名称</div><div>修改时间</div><div>大小</div>
+      </div>
+    ` + files.map((f, i) => {
+      const iconType = getFileIcon(f.mimeType, f.name);
+      return `
+        <div class="file-item" style="animation-delay:${i * 20}ms;">
+          <div class="file-icon ${iconType}"><span class="material-icons-outlined">insert_drive_file</span></div>
+          <div class="file-name">${escapeHtml(f.name)}</div>
+          <div class="file-time">${formatTime(f.modifiedTime)}</div>
+          <div class="file-size">${formatSize(f.size)}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function updateStorageInfo(files) {
+    const el = $('storageInfo');
+    if (!el) return;
+    let total = 0;
+    files.forEach(f => { total += parseInt(f.size || 0); });
+    el.textContent = `${files.length} 个文件 · ${formatSize(total)}`;
+  }
+
+  // ========== 上传 ==========
+  function uploadSingleFile(file) {
+    return new Promise((resolve, reject) => {
+      const metadata = { name: file.name, mimeType: file.type || 'application/octet-stream' };
+      const boundary = '-------314159265358979323846';
+      const delimiter = "\r\n--" + boundary + "\r\n";
+      const closeDelim = "\r\n--" + boundary + "--";
+
+      const reader = new FileReader();
+      reader.onload = function() {
+        const base64Data = reader.result.split(',')[1];
+        const contentType = file.type || 'application/octet-stream';
+        const multipartBody =
+          delimiter +
+          'Content-Type: application/json; charset=UTF-8\r\n\r\n' +
+          JSON.stringify(metadata) +
+          delimiter +
+          'Content-Type: ' + contentType + '\r\n' +
+          'Content-Transfer-Encoding: base64\r\n\r\n' +
+          base64Data +
+          closeDelim;
+
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name');
+        xhr.setRequestHeader('Authorization', 'Bearer ' + accessToken);
+        xhr.setRequestHeader('Content-Type', 'multipart/related; boundary="' + boundary + '"');
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) resolve(JSON.parse(xhr.responseText));
+          else reject(new Error('HTTP ' + xhr.status));
+        };
+        xhr.onerror = () => reject(new Error('网络错误'));
+        xhr.send(multipartBody);
+      };
+      reader.onerror = () => reject(new Error('读取文件失败'));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function handleUpload(e) {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    e.target.value = '';
+    let done = 0;
+    for (const file of files) {
+      try {
+        await uploadSingleFile(file);
+        done++;
+      } catch(err) {
+        toastMsg(`「${file.name}」上传失败：${err.message}`, 'error');
+      }
+    }
+    toastMsg(`已上传 ${done}/${files.length} 个文件`, 'success');
+    loadFiles();
+  }
+
+  // ========== 渲染 UI ==========
+  function renderDriveUI() {
+    main.innerHTML = `
+      <div class="toolbar">
+        <button class="upload-btn" id="uploadBtn">
+          <span class="material-icons-outlined">upload</span>
+          上传文件
+        </button>
+        <button class="refresh-btn" id="refreshBtn">
+          <span class="material-icons-outlined">refresh</span>
+          刷新
+        </button>
+        <div class="storage-info" id="storageInfo"></div>
+      </div>
+      <input type="file" id="fileInput" style="display:none;" multiple>
+      <div id="fileListContainer"></div>
+    `;
+    $('uploadBtn').addEventListener('click', () => $('fileInput').click());
+    $('refreshBtn').addEventListener('click', loadFiles);
+    $('fileInput').addEventListener('change', handleUpload);
+  }
+
+  // ========== 启动 ==========
+  renderUserBadge();
+  renderDriveUI();
+  loadFiles();
+})();
+</script>
+</body>
+</html>

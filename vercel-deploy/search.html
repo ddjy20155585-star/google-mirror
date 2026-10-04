@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google 镜像站 · 搜索</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Roboto', arial, sans-serif; }
+        :root {
+            --bg: #fff;
+            --text: #202124;
+            --text-secondary: #5f6368;
+            --border: #dfe1e5;
+            --hover: rgba(60, 64, 67, 0.08);
+            --link: #1a0dab;
+            --link-visited: #681da8;
+        }
+        body.dark {
+            --bg: #202124;
+            --text: #e8eaed;
+            --text-secondary: #9aa0a6;
+            --border: #5f6368;
+            --hover: rgba(232, 234, 237, 0.08);
+            --link: #8ab4f8;
+            --link-visited: #c58af9;
+        }
+        body {
+            background-color: var(--bg); min-height: 100vh;
+            display: flex; flex-direction: column; color: var(--text);
+            transition: background-color 0.4s, color 0.4s;
+        }
+
+        /* 顶部栏 */
+        .top-bar {
+            display: flex; align-items: center; gap: 20px;
+            padding: 16px 30px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg); position: sticky; top: 0; z-index: 100;
+            transition: background 0.4s, border-color 0.4s;
+        }
+        .logo-mini {
+            flex-shrink: 0; cursor: pointer; user-select: none;
+            display: flex; align-items: center; height: 30px;
+        }
+        .logo-mini svg { height: 30px; width: auto; display: block; }
+
+        .search-box {
+            flex: 1; max-width: 680px;
+            display: flex; align-items: center;
+            background: var(--bg); border: 1px solid var(--border);
+            border-radius: 24px; height: 44px;
+            padding: 0 8px 0 16px;
+            transition: box-shadow 0.2s, border-color 0.2s, background 0.4s;
+        }
+        .search-box:hover, .search-box:focus-within {
+            box-shadow: 0 1px 6px rgba(32,33,36,0.28); border-color: transparent;
+        }
+        .search-box input {
+            flex: 1; border: none; outline: none;
+            font-size: 16px; background: transparent; color: var(--text);
+        }
+        .search-box .material-icons-outlined {
+            font-size: 22px; color: var(--text-secondary);
+            padding: 8px; border-radius: 50%; cursor: pointer;
+            transition: background 0.15s;
+        }
+        .search-box .material-icons-outlined:hover { background: var(--hover); }
+
+        .theme-toggle {
+            width: 40px; height: 40px; border-radius: 50%;
+            background: transparent; border: none;
+            color: var(--text-secondary); cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+            transition: background 0.15s;
+        }
+        .theme-toggle:hover { background: var(--hover); }
+
+        /* 分类选项卡 + 翻译按钮 */
+        .tabs {
+            display: flex; align-items: center; gap: 24px;
+            padding: 0 30px; background: var(--bg);
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+            transition: background 0.4s, border-color 0.4s;
+        }
+        .tab {
+            padding: 12px 4px; cursor: pointer;
+            color: var(--text-secondary); border-bottom: 3px solid transparent;
+            transition: all 0.15s;
+        }
+        .tab.active { color: #1a73e8; border-bottom-color: #1a73e8; font-weight: 500; }
+        .tab:hover { color: var(--text); }
+
+        .translate-btn {
+            margin-left: auto;
+            display: flex; align-items: center; gap: 6px;
+            background: transparent; border: 1px solid var(--border);
+            color: var(--text-secondary); font-size: 13px;
+            padding: 6px 14px; border-radius: 16px; cursor: pointer;
+            transition: all 0.15s;
+        }
+        .translate-btn:hover { background: var(--hover); color: var(--text); }
+        .translate-btn .material-icons-outlined { font-size: 16px; }
+
+        /* 结果区 */
+        .result-area {
+            flex: 1; padding: 20px 30px 40px;
+            max-width: 700px; width: 100%;
+        }
+        .result-status {
+            font-size: 13px; color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        .result-item {
+            margin-bottom: 28px;
+            opacity: 0;
+            animation: fadeUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .result-item .url {
+            font-size: 13px; color: var(--text-secondary);
+            margin-bottom: 4px; word-break: break-all;
+        }
+        .result-item .title {
+            font-size: 20px; color: var(--link); font-weight: 400;
+            text-decoration: none; line-height: 1.3;
+            display: block; margin-bottom: 6px;
+        }
+        .result-item .title:hover { text-decoration: underline; }
+        .result-item .title:visited { color: var(--link-visited); }
+        .result-item .snippet {
+            font-size: 14px; color: var(--text);
+            line-height: 1.6;
+        }
+
+        /* 加载 / 错误 / 空 */
+        .loading, .error-box, .empty {
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; padding: 60px 20px; gap: 16px;
+            color: var(--text-secondary); font-size: 14px;
+        }
+        .spinner {
+            width: 40px; height: 40px;
+            border: 4px solid var(--hover);
+            border-top-color: #1a73e8;
+            border-radius: 50%;
+            animation: spin 0.9s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        @media (max-width: 600px) {
+            .top-bar { padding: 10px 12px; gap: 10px; }
+            .logo-mini svg { height: 24px; }
+            .tabs { padding: 0 12px; gap: 16px; }
+            .result-area { padding: 16px 12px 30px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-bar">
+        <div class="logo-mini" onclick="location.href='index.html'" title="返回首页">
+            <svg viewBox="0 0 272 92" xmlns="http://www.w3.org/2000/svg">
+                <path fill="#4285F4" d="M115.75 47.18c0 12.77-9.99 22.18-22.25 22.18s-22.25-9.41-22.25-22.18C71.25 34.32 81.24 25 93.5 25s22.25 9.32 22.25 22.18zm-9.74 0c0-7.98-5.79-13.44-12.51-13.44S80.99 39.2 80.99 47.18c0 7.9 5.79 13.44 12.51 13.44s12.51-5.55 12.51-13.44z"/>
+                <path fill="#EA4335" d="M163.75 47.18c0 12.77-9.99 22.18-22.25 22.18s-22.25-9.41-22.25-22.18c0-12.85 9.99-22.18 22.25-22.18s22.25 9.32 22.25 22.18zm-9.74 0c0-7.98-5.79-13.44-12.51-13.44s-12.51 5.46-12.51 13.44c0 7.9 5.79 13.44 12.51 13.44s12.51-5.55 12.51-13.44z"/>
+                <path fill="#FBBC05" d="M209.75 26.34v39.82c0 16.38-9.66 23.07-21.08 23.07-10.75 0-17.22-7.19-19.66-13.07l8.48-3.53c1.51 3.61 5.21 7.87 11.17 7.87 7.31 0 11.84-4.51 11.84-13v-3.19h-.34c-2.18 2.69-6.38 5.04-11.68 5.04-11.09 0-21.25-9.66-21.25-22.09 0-12.52 10.16-22.26 21.25-22.26 5.29 0 9.49 2.35 11.68 4.96h.34v-3.61h9.25zm-8.56 20.92c0-7.81-5.21-13.52-11.84-13.52-6.72 0-12.35 5.71-12.35 13.52 0 7.73 5.63 13.36 12.35 13.36 6.63 0 11.84-5.63 11.84-13.36z"/>
+                <path fill="#34A853" d="M225 3v65h-9.5V3h9.5z"/>
+                <path fill="#4285F4" d="M262.02 54.48l7.56 5.04c-2.44 3.61-8.32 9.83-18.48 9.83-12.6 0-22.01-9.74-22.01-22.18 0-13.19 9.49-22.18 20.92-22.18 11.51 0 17.14 9.16 18.98 14.11l1.01 2.52-29.65 12.28c2.27 4.45 5.8 6.72 10.75 6.72 4.96 0 8.4-2.44 10.92-6.14zm-23.27-7.98l19.82-8.23c-1.09-2.77-4.37-4.7-8.23-4.7-4.95 0-11.84 4.37-11.59 12.93z"/>
+                <path fill="#EA4335" d="M35.29 41.41V32H67c.31 1.64.47 3.58.47 5.68 0 7.06-1.93 15.79-8.15 22.01-6.05 6.3-13.78 9.66-24.02 9.66C16.32 69.35.36 53.89.36 34.91.36 15.93 16.32.47 35.3.47c10.5 0 17.98 4.12 23.6 9.49l-6.64 6.64c-4.03-3.78-9.49-6.72-16.97-6.72-13.86 0-24.7 11.17-24.7 25.03 0 13.86 10.84 25.03 24.7 25.03 8.99 0 14.11-3.61 17.39-6.89 2.66-2.66 4.41-6.46 5.1-11.65l-22.49.01z"/>
+            </svg>
+        </div>
+
+        <div class="search-box">
+            <input type="text" id="q" autocomplete="off" placeholder="搜索 Google">
+            <span class="material-icons-outlined" id="searchBtn">search</span>
+        </div>
+
+        <button class="theme-toggle" id="themeToggle" title="切换深色模式">
+            <span class="material-icons-outlined" id="themeIcon">dark_mode</span>
+        </button>
+    </div>
+
+    <div class="tabs">
+        <div class="tab active" data-type="web">全部</div>
+        <div class="tab" data-type="news">新闻</div>
+        <button class="translate-btn" id="translateBtn" title="在 Google 翻译中打开">
+            <span class="material-icons-outlined">translate</span>
+            翻译
+        </button>
+    </div>
+
+    <div class="result-area">
+        <div class="result-status" id="status"></div>
+        <div id="results"></div>
+    </div>
+
+    <script>
+    (function() {
+        // ★★★ 你的后端地址 ★★★
+        const API_BASE = 'https://tavily-search-backend.onrender.com';
+
+        const $ = id => document.getElementById(id);
+        const input = $('q');
+        const searchBtn = $('searchBtn');
+        const resultsEl = $('results');
+        const statusEl = $('status');
+        const themeToggle = $('themeToggle');
+        const themeIcon = $('themeIcon');
+        const tabs = document.querySelectorAll('.tab');
+        const translateBtn = $('translateBtn');
+
+        let currentQuery = '';
+        let currentType = 'web';
+
+        // ==================== 深色模式 ====================
+        function applyTheme(t) {
+            if (t === 'dark') {
+                document.body.classList.add('dark');
+                themeIcon.textContent = 'light_mode';
+            } else {
+                document.body.classList.remove('dark');
+                themeIcon.textContent = 'dark_mode';
+            }
+        }
+        applyTheme(localStorage.getItem('gm_theme') || 'light');
+        themeToggle.addEventListener('click', () => {
+            const t = document.body.classList.contains('dark') ? 'light' : 'dark';
+            applyTheme(t);
+            localStorage.setItem('gm_theme', t);
+        });
+
+        // ==================== 工具函数 ====================
+        function escapeHtml(s) {
+            return String(s).replace(/[&<>"']/g, c => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            })[c]);
+        }
+        function getDomain(url) {
+            try {
+                const u = new URL(url);
+                return u.hostname.replace(/^www\./, '');
+            } catch(e) { return url; }
+        }
+        function truncate(s, n) {
+            if (!s) return '';
+            return s.length > n ? s.slice(0, n) + '…' : s;
+        }
+        function getQueryParam(name) {
+            return new URLSearchParams(location.search).get(name) || '';
+        }
+
+        // ==================== 渲染结果 ====================
+        function renderResults(data) {
+            const results = data.results || [];
+            statusEl.textContent = `找到约 ${results.length} 条结果（${(data.response_time || 0).toFixed(2)} 秒）`;
+
+            if (results.length === 0) {
+                resultsEl.innerHTML = `
+                    <div class="empty">
+                        <span class="material-icons-outlined" style="font-size:48px;">search_off</span>
+                        <div>没有找到相关结果</div>
+                    </div>
+                `;
+                return;
+            }
+
+            resultsEl.innerHTML = '';
+            results.forEach((item, i) => {
+                const div = document.createElement('div');
+                div.className = 'result-item';
+                div.style.animationDelay = (i * 40) + 'ms';
+                div.innerHTML = `
+                    <div class="url">${escapeHtml(getDomain(item.url))}</div>
+                    <a class="title" href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.title)}</a>
+                    <div class="snippet">${escapeHtml(truncate(item.content, 300))}</div>
+                `;
+                resultsEl.appendChild(div);
+            });
+        }
+
+        // ==================== 搜索 ====================
+        async function doSearch(query, type) {
+            query = query || input.value.trim();
+            type = type || currentType;
+            if (!query) { input.focus(); return; }
+
+            currentQuery = query;
+            currentType = type;
+
+            history.replaceState(null, '', location.pathname + '?q=' + encodeURIComponent(query));
+
+            statusEl.textContent = '';
+            resultsEl.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <div>正在搜索…（首次可能需 30~50 秒冷启动）</div>
+                </div>
+            `;
+
+            try {
+                const url = `${API_BASE}/api/search?q=${encodeURIComponent(query)}&type=${encodeURIComponent(type)}`;
+                const res = await fetch(url);
+
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.error || `请求失败 (${res.status})`);
+                }
+
+                const data = await res.json();
+                renderResults(data);
+            } catch (e) {
+                console.error(e);
+                statusEl.textContent = '';
+                resultsEl.innerHTML = `
+                    <div class="error-box">
+                        <span class="material-icons-outlined" style="font-size:48px;color:#d93025;">error_outline</span>
+                        <div>加载失败：${escapeHtml(e.message)}</div>
+                        <div style="font-size:12px;color:var(--text-secondary);max-width:500px;text-align:center;line-height:1.6;">
+                            可能原因：后端冷启动超时、Tavily 配额用完、或网络问题。稍等 30 秒再试一次。
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // ==================== 事件绑定 ====================
+        searchBtn.addEventListener('click', () => doSearch());
+        input.addEventListener('keydown', e => {
+            if (e.key === 'Enter') { e.preventDefault(); doSearch(); }
+        });
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                const type = tab.dataset.type;
+                if (currentQuery) {
+                    doSearch(currentQuery, type);
+                } else {
+                    currentType = type;
+                }
+            });
+        });
+
+        // ==================== 翻译按钮：跳 Google 翻译官网 ====================
+        translateBtn.addEventListener('click', () => {
+            const q = currentQuery || input.value.trim();
+            if (q) {
+                window.open('https://translate.google.com/?sl=auto&tl=zh-CN&text=' + encodeURIComponent(q), '_blank');
+            } else {
+                window.open('https://translate.google.com/', '_blank');
+            }
+        });
+
+        // ==================== 初始化 ====================
+        const initialQ = getQueryParam('q');
+        if (initialQ) {
+            input.value = initialQ;
+            doSearch(initialQ);
+        } else {
+            input.focus();
+        }
+    })();
+    </script>
+</body>
+</html>

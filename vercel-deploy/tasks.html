@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Google 镜像站 · 待办清单</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Roboto', arial, sans-serif; }
+:root {
+  --bg: #fff; --text: #202124; --text-secondary: #5f6368;
+  --border: #dfe1e5; --hover: rgba(60,64,67,0.08); --card-bg: #fff;
+  --blue: #1a73e8; --green: #34a853; --red: #ea4335;
+}
+body.dark {
+  --bg: #202124; --text: #e8eaed; --text-secondary: #9aa0a6;
+  --border: #5f6368; --hover: rgba(232,234,237,0.08); --card-bg: #292a2d;
+}
+body {
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; display: flex; flex-direction: column;
+  transition: background 0.4s, color 0.4s;
+}
+.top-bar {
+  display: flex; align-items: center; gap: 16px;
+  padding: 14px 30px; border-bottom: 1px solid var(--border);
+  background: var(--bg); position: sticky; top: 0; z-index: 100;
+}
+.logo-mini { display: flex; align-items: center; height: 28px; cursor: pointer; }
+.logo-mini svg { height: 28px; width: auto; }
+.page-title {
+  font-size: 20px; font-weight: 500;
+  display: flex; align-items: center; gap: 6px;
+}
+.page-title .material-icons-outlined { font-size: 24px; color: var(--blue); }
+.top-spacer { flex: 1; }
+.user-badge {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 12px; border-radius: 20px;
+  background: var(--hover); cursor: pointer;
+}
+.user-badge img { width: 26px; height: 26px; border-radius: 50%; }
+.user-badge .name { font-size: 13px; font-weight: 500; }
+.theme-toggle {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: transparent; border: none;
+  color: var(--text-secondary); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.theme-toggle:hover { background: var(--hover); }
+.main { flex: 1; padding: 30px; max-width: 900px; width: 100%; margin: 0 auto; }
+.layout { display: grid; grid-template-columns: 240px 1fr; gap: 24px; }
+@media (max-width: 700px) {
+  .layout { grid-template-columns: 1fr; gap: 16px; }
+}
+.list-panel {
+  background: var(--card-bg); border-radius: 12px;
+  padding: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  height: fit-content;
+}
+.list-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: 8px;
+  cursor: pointer; font-size: 14px;
+  color: var(--text); transition: background 0.15s;
+}
+.list-item:hover { background: var(--hover); }
+.list-item.active {
+  background: #e8f0fe; color: var(--blue); font-weight: 500;
+}
+body.dark .list-item.active { background: #1a3a5c; color: #8ab4f8; }
+.list-item .material-icons-outlined {
+  font-size: 20px; color: var(--text-secondary); flex-shrink: 0;
+}
+.list-item.active .material-icons-outlined { color: var(--blue); }
+.task-panel { display: flex; flex-direction: column; gap: 16px; }
+.add-task {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--card-bg); border-radius: 12px;
+  padding: 12px 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+.add-task input {
+  flex: 1; border: none; outline: none;
+  font-size: 14px; background: transparent; color: var(--text);
+  height: 32px;
+}
+.add-task input::placeholder { color: var(--text-secondary); }
+.add-task button {
+  background: var(--blue); color: #fff;
+  border: none; padding: 8px 16px; border-radius: 18px;
+  font-size: 13px; font-weight: 500; cursor: pointer;
+  display: flex; align-items: center; gap: 4px;
+}
+.add-task button:hover { background: #1b66c9; }
+.add-task .material-icons-outlined { font-size: 20px; color: var(--text-secondary); }
+.task-list { display: flex; flex-direction: column; gap: 8px; }
+.task-item {
+  display: flex; align-items: flex-start; gap: 12px;
+  background: var(--card-bg); border-radius: 10px;
+  padding: 14px 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  transition: opacity 0.3s, transform 0.15s;
+  opacity: 0; animation: fadeUp 0.3s ease forwards;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.task-item:hover { transform: translateX(2px); }
+.task-checkbox {
+  width: 22px; height: 22px; flex-shrink: 0;
+  border: 2px solid var(--text-secondary); border-radius: 50%;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s; margin-top: 1px;
+}
+.task-checkbox:hover { border-color: var(--blue); }
+.task-checkbox.checked {
+  background: var(--blue); border-color: var(--blue);
+}
+.task-checkbox .material-icons-outlined {
+  font-size: 16px; color: #fff; visibility: hidden;
+}
+.task-checkbox.checked .material-icons-outlined { visibility: visible; }
+.task-content { flex: 1; min-width: 0; }
+.task-title {
+  font-size: 14px; color: var(--text);
+  line-height: 1.5; word-break: break-word;
+}
+.task-item.completed .task-title {
+  text-decoration: line-through;
+  color: var(--text-secondary);
+}
+.task-notes {
+  font-size: 12px; color: var(--text-secondary);
+  margin-top: 4px; line-height: 1.5;
+}
+.task-meta {
+  font-size: 11px; color: var(--text-secondary); margin-top: 6px;
+}
+.task-delete {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: transparent; border: none; cursor: pointer;
+  color: var(--text-secondary); display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s; flex-shrink: 0;
+}
+.task-delete:hover { background: #fce8e6; color: var(--red); }
+.empty-state {
+  padding: 50px 20px; text-align: center;
+  color: var(--text-secondary); font-size: 14px;
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+}
+.empty-state .material-icons-outlined { font-size: 48px; opacity: 0.4; }
+.loading {
+  text-align: center; padding: 50px 20px;
+  color: var(--text-secondary); font-size: 14px;
+}
+.spinner {
+  width: 32px; height: 32px; margin: 0 auto 12px;
+  border: 3px solid var(--hover); border-top-color: var(--blue);
+  border-radius: 50%; animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.toast {
+  position: fixed; bottom: 30px; left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: #202124; color: #fff;
+  padding: 12px 24px; border-radius: 8px;
+  font-size: 14px; z-index: 10000;
+  opacity: 0; pointer-events: none; transition: all 0.3s;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.success { background: #1e8e3e; }
+.toast.error { background: #d93025; }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="logo-mini" onclick="location.href='index.html'">
+    <svg viewBox="0 0 272 92" xmlns="http://www.w3.org/2000/svg">
+      <path fill="#4285F4" d="M115.75 47.18c0 12.77-9.99 22.18-22.25 22.18s-22.25-9.41-22.25-22.18C71.25 34.32 81.24 25 93.5 25s22.25 9.32 22.25 22.18zm-9.74 0c0-7.98-5.79-13.44-12.51-13.44S80.99 39.2 80.99 47.18c0 7.9 5.79 13.44 12.51 13.44s12.51-5.55 12.51-13.44z"/>
+      <path fill="#EA4335" d="M163.75 47.18c0 12.77-9.99 22.18-22.25 22.18s-22.25-9.41-22.25-22.18c0-12.85 9.99-22.18 22.25-22.18s22.25 9.32 22.25 22.18zm-9.74 0c0-7.98-5.79-13.44-12.51-13.44s-12.51 5.46-12.51 13.44c0 7.9 5.79 13.44 12.51 13.44s12.51-5.55 12.51-13.44z"/>
+      <path fill="#FBBC05" d="M209.75 26.34v39.82c0 16.38-9.66 23.07-21.08 23.07-10.75 0-17.22-7.19-19.66-13.07l8.48-3.53c1.51 3.61 5.21 7.87 11.17 7.87 7.31 0 11.84-4.51 11.84-13v-3.19h-.34c-2.18 2.69-6.38 5.04-11.68 5.04-11.09 0-21.25-9.66-21.25-22.09 0-12.52 10.16-22.26 21.25-22.26 5.29 0 9.49 2.35 11.68 4.96h.34v-3.61h9.25zm-8.56 20.92c0-7.81-5.21-13.52-11.84-13.52-6.72 0-12.35 5.71-12.35 13.52 0 7.73 5.63 13.36 12.35 13.36 6.63 0 11.84-5.63 11.84-13.36z"/>
+      <path fill="#34A853" d="M225 3v65h-9.5V3h9.5z"/>
+      <path fill="#4285F4" d="M262.02 54.48l7.56 5.04c-2.44 3.61-8.32 9.83-18.48 9.83-12.6 0-22.01-9.74-22.01-22.18 0-13.19 9.49-22.18 20.92-22.18 11.51 0 17.14 9.16 18.98 14.11l1.01 2.52-29.65 12.28c2.27 4.45 5.8 6.72 10.75 6.72 4.96 0 8.4-2.44 10.92-6.14zm-23.27-7.98l19.82-8.23c-1.09-2.77-4.37-4.7-8.23-4.7-4.95 0-11.84 4.37-11.59 12.93z"/>
+      <path fill="#EA4335" d="M35.29 41.41V32H67c.31 1.64.47 3.58.47 5.68 0 7.06-1.93 15.79-8.15 22.01-6.05 6.3-13.78 9.66-24.02 9.66C16.32 69.35.36 53.89.36 34.91.36 15.93 16.32.47 35.3.47c10.5 0 17.98 4.12 23.6 9.49l-6.64 6.64c-4.03-3.78-9.49-6.72-16.97-6.72-13.86 0-24.7 11.17-24.7 25.03 0 13.86 10.84 25.03 24.7 25.03 8.99 0 14.11-3.61 17.39-6.89 2.66-2.66 4.41-6.46 5.1-11.65l-22.49.01z"/>
+    </svg>
+  </div>
+  <div class="page-title">
+    <span class="material-icons-outlined">check_circle_outline</span>
+    待办清单
+  </div>
+  <div class="top-spacer"></div>
+  <button class="theme-toggle" id="themeToggle" title="切换深色模式">
+    <span class="material-icons-outlined" id="themeIcon">dark_mode</span>
+  </button>
+  <div id="userArea"></div>
+</div>
+
+<div class="main" id="main"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function() {
+  // ========== 统一 Token 模式 ==========
+  const STORAGE_TOKEN = 'gm_token';
+  const STORAGE_USER = 'gm_user';
+  const STORAGE_THEME = 'gm_theme';
+
+  function safeGet(key, def) {
+    try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : def; }
+    catch(e) { return def; }
+  }
+  function safeSet(key, val) {
+    try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {}
+  }
+  function safeRemove(key) {
+    try { localStorage.removeItem(key); } catch(e) {}
+  }
+  function requireToken() {
+    const token = safeGet(STORAGE_TOKEN, null);
+    if (!token) {
+      const next = location.pathname.split('/').pop() || 'index.html';
+      location.href = 'auth.html?next=' + encodeURIComponent(next);
+      return null;
+    }
+    return token;
+  }
+  function loadUser() { return safeGet(STORAGE_USER, null); }
+  function signOut() {
+    safeRemove(STORAGE_TOKEN);
+    safeRemove(STORAGE_USER);
+    safeRemove('gm_token_time');
+    location.href = 'auth.html';
+  }
+
+  const accessToken = requireToken();
+  if (!accessToken) return;
+  const currentUser = loadUser();
+
+  // ========== 元素 ==========
+  const $ = id => document.getElementById(id);
+  const main = $('main');
+  const userArea = $('userArea');
+  const themeToggle = $('themeToggle');
+  const themeIcon = $('themeIcon');
+  const toast = $('toast');
+
+  let lists = [];
+  let currentListId = '@default';
+  let tasks = [];
+
+  // ========== 工具 ==========
+  function toastMsg(msg, type = '') {
+    toast.textContent = msg;
+    toast.className = 'toast show ' + type;
+    setTimeout(() => toast.className = 'toast ' + type, 2500);
+  }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[c]);
+  }
+  function formatDate(iso) {
+    if (!iso) return '';
+    try {
+      const d = new Date(iso);
+      return d.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
+    } catch(e) { return ''; }
+  }
+
+  // ========== 深色模式 ==========
+  function applyTheme(t) {
+    if (t === 'dark') { document.body.classList.add('dark'); themeIcon.textContent = 'light_mode'; }
+    else { document.body.classList.remove('dark'); themeIcon.textContent = 'dark_mode'; }
+  }
+  applyTheme(safeGet(STORAGE_THEME, 'light'));
+  themeToggle.addEventListener('click', () => {
+    const t = document.body.classList.contains('dark') ? 'light' : 'dark';
+    applyTheme(t);
+    safeSet(STORAGE_THEME, t);
+  });
+
+  // ========== 用户徽章 ==========
+  function renderUserBadge() {
+    if (!currentUser) { userArea.innerHTML = ''; return; }
+    userArea.innerHTML = `
+      <div class="user-badge" id="userBadge" title="点击退出">
+        <img src="${escapeHtml(currentUser.picture || '')}" alt="">
+        <span class="name">${escapeHtml(currentUser.name || currentUser.email || '')}</span>
+      </div>
+    `;
+    $('userBadge').addEventListener('click', () => {
+      if (confirm('退出登录？')) signOut();
+    });
+  }
+
+  // ========== Tasks API ==========
+  async function apiRequest(url, options = {}) {
+    options.headers = options.headers || {};
+    options.headers['Authorization'] = 'Bearer ' + accessToken;
+    const res = await fetch(url, options);
+    if (res.status === 401) {
+      toastMsg('登录已过期，请重新登录', 'error');
+      setTimeout(signOut, 1000);
+      throw new Error('unauthorized');
+    }
+    return res;
+  }
+
+  async function fetchLists() {
+    const url = 'https://tasks.googleapis.com/tasks/v1/users/@me/lists?maxResults=100';
+    const res = await apiRequest(url);
+    if (!res.ok) throw new Error('获取清单失败');
+    const data = await res.json();
+    return data.items || [];
+  }
+
+  async function fetchTasks(listId) {
+    const url = 'https://tasks.googleapis.com/tasks/v1/lists/' + encodeURIComponent(listId) +
+      '/tasks?maxResults=100&showCompleted=true&showHidden=true';
+    const res = await apiRequest(url);
+    if (!res.ok) throw new Error('获取任务失败');
+    const data = await res.json();
+    return data.items || [];
+  }
+
+  async function addTask(listId, title) {
+    const url = 'https://tasks.googleapis.com/tasks/v1/lists/' + encodeURIComponent(listId) + '/tasks';
+    const res = await apiRequest(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: title })
+    });
+    if (!res.ok) throw new Error('创建任务失败');
+    return res.json();
+  }
+
+  async function updateTask(listId, taskId, patch) {
+    const url = 'https://tasks.googleapis.com/tasks/v1/lists/' + encodeURIComponent(listId) +
+      '/tasks/' + encodeURIComponent(taskId);
+    const res = await apiRequest(url, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(patch)
+    });
+    if (!res.ok) throw new Error('更新任务失败');
+    return res.json();
+  }
+
+  async function deleteTask(listId, taskId) {
+    const url = 'https://tasks.googleapis.com/tasks/v1/lists/' + encodeURIComponent(listId) +
+      '/tasks/' + encodeURIComponent(taskId);
+    const res = await apiRequest(url, { method: 'DELETE' });
+    if (!res.ok && res.status !== 204) throw new Error('删除失败');
+  }
+
+  async function completeTask(listId, taskId) {
+    return updateTask(listId, taskId, { status: 'completed' });
+  }
+  async function uncompleteTask(listId, taskId) {
+    return updateTask(listId, taskId, { status: 'needsAction' });
+  }
+
+  // ========== 渲染 ==========
+  function renderUI() {
+    main.innerHTML = `
+      <div class="layout">
+        <div class="list-panel" id="listPanel">
+          <div class="loading">加载中…</div>
+        </div>
+        <div class="task-panel">
+          <div class="add-task">
+            <span class="material-icons-outlined">add</span>
+            <input type="text" id="newTaskInput" placeholder="添加任务，回车确认…">
+            <button id="addTaskBtn">添加</button>
+          </div>
+          <div class="task-list" id="taskList">
+            <div class="loading">加载中…</div>
+          </div>
+        </div>
+      </div>
+    `;
+    $('addTaskBtn').addEventListener('click', handleAddTask);
+    $('newTaskInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') handleAddTask();
+    });
+    loadAll();
+  }
+
+  async function loadAll() {
+    try {
+      lists = await fetchLists();
+      // 如果当前选中的清单不存在，用第一个
+      if (!lists.find(l => l.id === currentListId) && lists.length > 0) {
+        currentListId = lists[0].id;
+      }
+      renderListPanel();
+      await loadTasks();
+    } catch(e) {
+      toastMsg(e.message, 'error');
+    }
+  }
+
+  function renderListPanel() {
+    const panel = $('listPanel');
+    if (!panel) return;
+    if (lists.length === 0) {
+      panel.innerHTML = '<div class="empty-state">没有清单</div>';
+      return;
+    }
+    panel.innerHTML = '';
+    lists.forEach(l => {
+      const item = document.createElement('div');
+      item.className = 'list-item' + (l.id === currentListId ? ' active' : '');
+      item.innerHTML = `
+        <span class="material-icons-outlined">list</span>
+        <span>${escapeHtml(l.title || '未命名清单')}</span>
+      `;
+      item.addEventListener('click', () => {
+        if (currentListId === l.id) return;
+        currentListId = l.id;
+        renderListPanel();
+        loadTasks();
+      });
+      panel.appendChild(item);
+    });
+  }
+
+  async function loadTasks() {
+    const list = $('taskList');
+    if (!list) return;
+    list.innerHTML = '<div class="loading"><div class="spinner"></div>加载任务…</div>';
+    try {
+      tasks = await fetchTasks(currentListId);
+      renderTasks();
+    } catch(e) {
+      list.innerHTML = `<div class="empty-state">加载失败：${escapeHtml(e.message)}</div>`;
+    }
+  }
+
+  function renderTasks() {
+    const list = $('taskList');
+    if (!list) return;
+    if (tasks.length === 0) {
+      list.innerHTML = `
+        <div class="empty-state">
+          <span class="material-icons-outlined">task_alt</span>
+          <div>这个清单还没有任务</div>
+        </div>
+      `;
+      return;
+    }
+    list.innerHTML = '';
+    tasks.forEach((task, i) => {
+      const isCompleted = task.status === 'completed';
+      const item = document.createElement('div');
+      item.className = 'task-item' + (isCompleted ? ' completed' : '');
+      item.style.animationDelay = (i * 20) + 'ms';
+      const notes = task.notes ? `<div class="task-notes">${escapeHtml(task.notes)}</div>` : '';
+      const due = task.due ? `<div class="task-meta">📅 ${formatDate(task.due)}</div>` : '';
+      item.innerHTML = `
+        <div class="task-checkbox ${isCompleted ? 'checked' : ''}" data-action="toggle">
+          <span class="material-icons-outlined">check</span>
+        </div>
+        <div class="task-content">
+          <div class="task-title">${escapeHtml(task.title || '（无标题）')}</div>
+          ${notes}
+          ${due}
+        </div>
+        <button class="task-delete" data-action="delete" title="删除">
+          <span class="material-icons-outlined" style="font-size:18px;">delete</span>
+        </button>
+      `;
+      item.querySelector('[data-action="toggle"]').addEventListener('click', async () => {
+        try {
+          if (isCompleted) await uncompleteTask(currentListId, task.id);
+          else await completeTask(currentListId, task.id);
+          task.status = isCompleted ? 'needsAction' : 'completed';
+          renderTasks();
+        } catch(e) {
+          toastMsg('操作失败：' + e.message, 'error');
+          loadTasks();
+        }
+      });
+      item.querySelector('[data-action="delete"]').addEventListener('click', async () => {
+        if (!confirm('确定删除这个任务？')) return;
+        try {
+          await deleteTask(currentListId, task.id);
+          toastMsg('已删除', 'success');
+          loadTasks();
+        } catch(e) {
+          toastMsg('删除失败：' + e.message, 'error');
+        }
+      });
+      list.appendChild(item);
+    });
+  }
+
+  async function handleAddTask() {
+    const input = $('newTaskInput');
+    const title = input.value.trim();
+    if (!title) { input.focus(); return; }
+    try {
+      await addTask(currentListId, title);
+      input.value = '';
+      toastMsg('已添加', 'success');
+      loadTasks();
+    } catch(e) {
+      toastMsg('添加失败：' + e.message, 'error');
+    }
+  }
+
+  // ========== 启动 ==========
+  renderUserBadge();
+  renderUI();
+})();
+</script>
+</body>
+</html>

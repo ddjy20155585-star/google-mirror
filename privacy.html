@@ -2,32 +2,93 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>隐私权政策 · Google Mirror</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>隐私政策 · Google Mirror</title>
 <style>
-body{font-family:-apple-system,sans-serif;max-width:720px;margin:60px auto;padding:0 24px;line-height:1.8;color:#202124;}
-h1{font-size:26px;margin-bottom:8px;}
-h2{font-size:18px;margin-top:32px;color:#202124;}
-p{color:#3c4043;}
-.meta{color:#5f6368;font-size:14px;margin-bottom:32px;}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1.7;
+  color: #202124;
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  background: #fff;
+}
+h1 { font-size: 28px; font-weight: 500; margin-bottom: 8px; }
+h2 { font-size: 18px; font-weight: 500; margin-top: 32px; margin-bottom: 12px; }
+p { margin-bottom: 12px; }
+ul { margin-bottom: 12px; padding-left: 24px; }
+li { margin-bottom: 6px; }
+.meta { font-size: 14px; color: #5f6368; margin-bottom: 32px; }
+.highlight { background: #e8f0fe; padding: 16px; border-radius: 8px; margin: 16px 0; }
+code { background: #f1f3f4; padding: 2px 6px; border-radius: 4px; font-size: 14px; }
+a { color: #1a73e8; text-decoration: none; }
+a:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
-<h1>隐私权政策</h1>
-<div class="meta">最后更新：2026年10月1日</div>
 
-<h2>1. 我们收集什么信息</h2>
-<p>本应用仅在你点击“登录”并授权后，通过 Google OAuth 获取你的<b>姓名、邮箱和头像</b>。除此之外，不收集任何其他信息。</p>
+<h1>隐私政策</h1>
+<div class="meta">最后更新：2026年10月4日</div>
 
-<h2>2. 我们如何使用这些信息</h2>
-<p>你的姓名、邮箱和头像仅用于在页面右上角显示你的登录状态。这些信息不会存储到任何服务器，也不会分享给第三方。</p>
+<p>本隐私政策适用于 <strong>Google Mirror</strong>（以下简称“本应用”），该应用部署于 <code>ddjy20155585-star.github.io/google-mirror</code>。我们深知个人数据对您的重要性，并致力于保护您的隐私。本政策旨在向您说明我们如何访问、使用、存储和分享您的 Google 用户数据。</p>
 
-<h2>3. 数据存储</h2>
-<p>登录状态仅保存在你浏览器的 sessionStorage 中，关闭标签页即自动清除。</p>
+<div class="highlight">
+<strong>核心承诺：</strong>本应用是一个个人开发的开源演示项目，不设服务器端数据库，不收集、不存储您的任何个人数据。所有数据交互均发生在您的浏览器与 Google 官方 API 之间。
+</div>
 
-<h2>4. 第三方服务</h2>
-<p>本应用使用 Google OAuth 进行登录验证。Google 的隐私权政策请参见 <a href="https://policies.google.com/privacy">policies.google.com/privacy</a>。</p>
+<h2>1. 我们访问哪些 Google 用户数据</h2>
+<p>当您通过 Google 账号登录并授权本应用时，我们仅会请求实现特定功能所必需的最小权限范围（Scope），具体包括：</p>
+<ul>
+<li><strong>基本资料</strong>（<code>openid, email, profile</code>）：用于在界面上显示您的姓名和头像，确认您的身份。</li>
+<li><strong>云端硬盘</strong>（<code>drive.file, drive.appdata</code>）：用于在您授权下，创建、查看或管理由本应用生成的特定文件，以及存储本应用的配置数据（如主题偏好）。我们无法访问您云端硬盘中的其他文件。</li>
+<li><strong>表格/文档/幻灯片</strong>（<code>spreadsheets, documents, presentations</code>）：用于在您授权下，创建或管理您指定的表格、文档和演示文稿。</li>
+<li><strong>日历/任务/通讯录</strong>（<code>calendar.events, tasks, contacts.readonly</code>）：用于在您授权下，读取或管理您的日程、任务和联系人信息。</li>
+<li><strong>表单</strong>（<code>forms.body, forms.responses.readonly</code>）：用于在您授权下，创建表单或查看表单回复。</li>
+</ul>
+<p>所有权限请求均会明确列在 Google 的授权页面上，您可以自主选择是否授权。</p>
 
-<h2>5. 联系我们</h2>
-<p>如有任何疑问，请联系：ddyj20155585@gmail.com</p>
+<h2>2. 我们如何使用您的 Google 用户数据</h2>
+<p>我们严格遵循 <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank">Google API 服务用户数据政策</a>（包括有限使用要求）。您的 Google 用户数据仅用于：</p>
+<ul>
+<li><strong>提供核心功能：</strong>在您的浏览器中直接调用 Google API，实现搜索、文件管理、日程查看等功能。</li>
+<li><strong>维持登录状态：</strong>在您的浏览器本地存储访问令牌（Access Token），以便您在不同页面间切换时无需重复授权。</li>
+<li><strong>跨设备同步（可选）：</strong>将您的界面偏好设置（如深色模式）加密存储在您自己的 Google Drive <code>appDataFolder</code> 中，以便您在另一台设备登录时恢复设置。此数据您完全可控，我们无法读取。</li>
+</ul>
+<p><strong>我们不会</strong>将您的数据用于广告、用户画像、信用评估或任何其他商业目的。</p>
+
+<h2>3. 数据存储与保留</h2>
+<ul>
+<li><strong>本地存储：</strong>访问令牌（Access Token）和用户偏好设置仅保存在您浏览器的 <code>localStorage</code> 中。关闭浏览器或清除缓存后，这些数据将被删除。</li>
+<li><strong>云端存储：</strong>如果您使用跨设备同步功能，偏好设置将存储在您自己的 Google 账号下的隐藏应用数据文件夹中。我们不会在第三方服务器上存储任何副本。</li>
+<li><strong>数据保留：</strong>由于我们不存储您的数据，因此不存在数据保留期限问题。您随时可以通过撤销 Google 账号授权或清除浏览器数据来终止本应用对您数据的访问。</li>
+</ul>
+
+<h2>4. 数据共享与披露</h2>
+<p>我们不会与任何第三方共享、出售或转让您的 Google 用户数据。所有数据交互仅在您的浏览器和 Google 服务器之间进行。仅在法律强制要求（如法院命令）的情况下，我们才可能披露数据，但我们会尽力在披露前通知您（除非法律禁止）。</p>
+
+<h2>5. 您的数据控制权</h2>
+<ul>
+<li><strong>授权管理：</strong>您可以随时访问 <a href="https://myaccount.google.com/permissions" target="_blank">Google 账号权限页面</a>，撤销本应用对您数据的访问权限。</li>
+<li><strong>数据删除：</strong>撤销授权后，本应用将无法再访问您的 Google 数据。您浏览器本地存储的数据可通过清除浏览器数据来删除。</li>
+<li><strong>数据导出：</strong>由于我们不存储数据，无需提供数据导出功能。</li>
+</ul>
+
+<h2>6. 安全措施</h2>
+<p>本应用运行在 HTTPS 协议下，与 Google API 的所有通信均经过加密。然而，请注意，没有任何互联网传输或电子存储方法是 100% 安全的。您需要自行确保您的设备安全。</p>
+
+<h2>7. 第三方服务</h2>
+<p>本应用依赖 Google 提供的 OAuth 授权及各类 API 服务。您的数据将直接与 Google 服务器交互。请参阅 <a href="https://policies.google.com/privacy" target="_blank">Google 隐私权政策</a> 了解 Google 如何处理您的数据。</p>
+
+<h2>8. 政策更新</h2>
+<p>我们可能会不时更新本隐私政策。任何重大变更都会在此页面公布，并更新顶部的“最后更新”日期。建议您定期查看本页面。</p>
+
+<h2>9. 联系方式</h2>
+<p>如果您对本隐私政策有任何疑问或建议，请通过以下方式联系我们：</p>
+<ul>
+<li>电子邮件：ddjy20155585@gmail.com</li>
+<li>GitHub 仓库：<a href="https://github.com/ddjy20155585-star/google-mirror" target="_blank">https://github.com/ddjy20155585-star/google-mirror</a></li>
+</ul>
+
 </body>
 </html>

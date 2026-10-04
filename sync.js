@@ -35,19 +35,36 @@
 
   // 上传配置到 appDataFolder
   async function uploadConfig(token, config) {
-    const existing = await findConfigFile(token);
-    const metadata = { name: SYNC_FILE_NAME, mimeType: 'application/json' };
-    const boundary = '-------314159265358979323846';
-    const delimiter = "\r\n--" + boundary + "\r\n";
-    const closeDelim = "\r\n--" + boundary + "--";
-    const body =
-      delimiter +
-      'Content-Type: application/json\r\n\r\n' +
-      JSON.stringify(metadata) +
-      delimiter +
-      'Content-Type: application/json\r\n\r\n' +
-      JSON.stringify(config) +
-      closeDelim;
+  const metadata = { name: SYNC_FILE_NAME, mimeType: 'application/json' };
+  const boundary = '-------314159265358979323846';
+  const delimiter = "\r\n--" + boundary + "\r\n";
+  const closeDelim = "\r\n--" + boundary + "--";
+  const body =
+    delimiter +
+    'Content-Type: application/json\r\n\r\n' +
+    JSON.stringify(metadata) +
+    delimiter +
+    'Content-Type: application/json\r\n\r\n' +
+    JSON.stringify(config) +
+    closeDelim;
+
+  const res = await fetch(
+    'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name',
+    {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer ' + token,
+        'Content-Type': 'multipart/related; boundary="' + boundary + '"'
+      },
+      body: body
+    }
+  );
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error('上传失败 ' + res.status + ': ' + err);
+  }
+  return res.json();
+}
 
     let url = 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
     let method = 'POST';

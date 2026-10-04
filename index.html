@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
 <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined">
 <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+<script src="sync.js"></script>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Roboto', arial, sans-serif; }
 :root {
@@ -770,6 +771,7 @@ body.dark .promo-banner { background: #1a3a5c; }
     const newMode = isMinimal ? 'full' : 'minimal';
     applyUiMode(newMode);
     safeSet(STORAGE_KEY_UI, newMode);
+    if (window.gmSync) window.gmSync.push();
   });
 
   // ========== 深色模式 ==========
@@ -784,11 +786,12 @@ body.dark .promo-banner { background: #1a3a5c; }
   }
   applyTheme(safeGet(STORAGE_KEY_THEME, 'light'));
   themeToggle.addEventListener('click', () => {
-    const isDark = document.body.classList.contains('dark');
-    const newTheme = isDark ? 'light' : 'dark';
-    applyTheme(newTheme);
-    safeSet(STORAGE_KEY_THEME, newTheme);
-  });
+  const isDark = document.body.classList.contains('dark');
+  const newTheme = isDark ? 'light' : 'dark';
+  applyTheme(newTheme);
+  safeSet(STORAGE_KEY_THEME, newTheme);
+  if (window.gmSync) window.gmSync.push();
+});
 
   // ========== 统一 Token 模式 ==========
   function getToken() {
@@ -1313,7 +1316,16 @@ body.dark .promo-banner { background: #1a3a5c; }
     if (e.key === 'Escape' && appsOverlay.classList.contains('open')) closeAppsPanel();
   });
 
-  window.addEventListener('load', () => searchInput.focus());
+ // 页面加载时从云端同步配置
+if (window.gmSync) {
+  window.gmSync.pull().then(config => {
+    if (config) {
+      if (config.gm_theme) applyTheme(config.gm_theme);
+      if (config.gm_ui_mode) applyUiMode(config.gm_ui_mode);
+    }
+  });
+} 
+window.addEventListener('load', () => searchInput.focus());
 })();
 </script>
 </body>

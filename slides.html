@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Google 镜像站 · 幻灯片</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Roboto', arial, sans-serif; }
+:root {
+  --bg: #fff; --text: #202124; --text-secondary: #5f6368;
+  --border: #dfe1e5; --hover: rgba(60,64,67,0.08); --card-bg: #fff;
+  --blue: #1a73e8; --red: #ea4335; --yellow: #fbbc04;
+}
+body.dark {
+  --bg: #202124; --text: #e8eaed; --text-secondary: #9aa0a6;
+  --border: #5f6368; --hover: rgba(232,234,237,0.08); --card-bg: #292a2d;
+}
+body {
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; display: flex; flex-direction: column;
+  transition: background 0.4s, color 0.4s;
+}
+.top-bar {
+  display: flex; align-items: center; gap: 16px;
+  padding: 14px 30px; border-bottom: 1px solid var(--border);
+  background: var(--bg); position: sticky; top: 0; z-index: 100;
+}
+.logo-mini { display: flex; align-items: center; height: 28px; cursor: pointer; }
+.logo-mini svg { height: 28px; width: auto; }
+.page-title {
+  font-size: 20px; font-weight: 500;
+  display: flex; align-items: center; gap: 6px;
+}
+.page-title .material-icons-outlined { font-size: 24px; color: var(--yellow); }
+.top-spacer { flex: 1; }
+.user-badge {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 12px; border-radius: 20px;
+  background: var(--hover); cursor: pointer;
+}
+.user-badge img { width: 26px; height: 26px; border-radius: 50%; }
+.user-badge .name { font-size: 13px; font-weight: 500; }
+.theme-toggle {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: transparent; border: none;
+  color: var(--text-secondary); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.theme-toggle:hover { background: var(--hover); }
+.main { flex: 1; padding: 30px; max-width: 1000px; width: 100%; margin: 0 auto; }
+.toolbar {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 24px; flex-wrap: wrap;
+}
+.btn-primary {
+  background: var(--blue); color: #fff;
+  border: none; padding: 9px 18px; border-radius: 6px;
+  font-size: 14px; font-weight: 500;
+  cursor: pointer; display: flex; align-items: center; gap: 6px;
+}
+.btn-primary:hover { background: #1b66c9; }
+.btn-secondary {
+  background: transparent; color: var(--text-secondary);
+  border: 1px solid var(--border);
+  padding: 9px 16px; border-radius: 6px;
+  font-size: 14px; cursor: pointer;
+  display: flex; align-items: center; gap: 6px;
+}
+.btn-secondary:hover { background: var(--hover); color: var(--text); }
+.count-info { margin-left: auto; font-size: 13px; color: var(--text-secondary); }
+.slide-list { display: flex; flex-direction: column; gap: 8px; }
+.slide-item {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 18px;
+  background: var(--card-bg); border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  opacity: 0; animation: fadeUp 0.3s ease forwards;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.slide-item:hover {
+  transform: translateX(2px);
+  box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+}
+.slide-icon {
+  width: 40px; height: 40px; border-radius: 6px;
+  background: #fbbc04; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.slide-icon .material-icons-outlined { color: #fff; font-size: 22px; }
+.slide-info { flex: 1; min-width: 0; }
+.slide-title {
+  font-size: 15px; font-weight: 500; color: var(--text);
+  margin-bottom: 4px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.slide-meta { font-size: 12px; color: var(--text-secondary); }
+.slide-actions { flex-shrink: 0; display: flex; gap: 4px; }
+.slide-actions button {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: transparent; border: none;
+  color: var(--text-secondary); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s, color 0.15s;
+}
+.slide-actions button:hover { background: #fce8e6; color: var(--red); }
+.empty-state {
+  padding: 60px 20px; text-align: center;
+  color: var(--text-secondary); font-size: 14px;
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+}
+.empty-state .material-icons-outlined { font-size: 48px; opacity: 0.5; }
+.loading { text-align: center; padding: 60px 20px; color: var(--text-secondary); font-size: 14px; }
+.spinner {
+  width: 36px; height: 36px; margin: 0 auto 14px;
+  border: 3px solid var(--hover); border-top-color: var(--blue);
+  border-radius: 50%; animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+  display: none; align-items: center; justify-content: center;
+  z-index: 9999; opacity: 0; transition: opacity 0.25s;
+}
+.modal-overlay.open { display: flex; opacity: 1; }
+.modal {
+  background: var(--card-bg); border-radius: 16px;
+  padding: 28px; width: 100%; max-width: 440px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+  transform: scale(0.9); transition: transform 0.25s;
+}
+.modal-overlay.open .modal { transform: scale(1); }
+.modal h3 { font-size: 18px; margin-bottom: 20px; }
+.modal label {
+  display: block; font-size: 13px; color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+.modal input {
+  width: 100%; padding: 10px 12px; font-size: 14px;
+  border: 1px solid var(--border); border-radius: 6px;
+  background: var(--bg); color: var(--text);
+  outline: none;
+}
+.modal input:focus { border-color: var(--blue); }
+.modal-actions {
+  display: flex; gap: 8px; justify-content: flex-end; margin-top: 24px;
+}
+.modal-actions button {
+  padding: 9px 18px; border-radius: 6px;
+  font-size: 14px; cursor: pointer; border: none;
+}
+.modal-actions .cancel {
+  background: transparent; color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+.modal-actions .confirm { background: var(--blue); color: #fff; }
+.modal-actions .confirm:hover { background: #1b66c9; }
+.toast {
+  position: fixed; bottom: 30px; left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: #202124; color: #fff;
+  padding: 12px 24px; border-radius: 8px;
+  font-size: 14px; z-index: 10000;
+  opacity: 0; pointer-events: none; transition: all 0.3s;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.success { background: #1e8e3e; }
+.toast.error { background: #d93025; }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="logo-mini" onclick="location.href='index.html'">
+    <svg viewBox="0 0 272 92" xmlns="http://www.w3.org/2000/svg">
+      <path fill="#4285F4" d="M115.75 47.18c0 12.77-9.99 22.18-22.25 22.18s-22.25-9.41-22.25-22.18C71.25 34.32 81.24 25 93.5 25s22.25 9.32 22.25 22.18zm-9.74 0c0-7.98-5.79-13.44-12.51-13.44S80.99 39.2 80.99 47.18c0 7.9 5.79 13.44 12.51 13.44s12.51-5.55 12.51-13.44z"/>
+      <path fill="#EA4335" d="M163.75 47.18c0 12.77-9.99 22.18-22.25 22.18s-22.25-9.41-22.25-22.18c0-12.85 9.99-22.18 22.25-22.18s22.25 9.32 22.25 22.18zm-9.74 0c0-7.98-5.79-13.44-12.51-13.44s-12.51 5.46-12.51 13.44c0 7.9 5.79 13.44 12.51 13.44s12.51-5.55 12.51-13.44z"/>
+      <path fill="#FBBC05" d="M209.75 26.34v39.82c0 16.38-9.66 23.07-21.08 23.07-10.75 0-17.22-7.19-19.66-13.07l8.48-3.53c1.51 3.61 5.21 7.87 11.17 7.87 7.31 0 11.84-4.51 11.84-13v-3.19h-.34c-2.18 2.69-6.38 5.04-11.68 5.04-11.09 0-21.25-9.66-21.25-22.09 0-12.52 10.16-22.26 21.25-22.26 5.29 0 9.49 2.35 11.68 4.96h.34v-3.61h9.25zm-8.56 20.92c0-7.81-5.21-13.52-11.84-13.52-6.72 0-12.35 5.71-12.35 13.52 0 7.73 5.63 13.36 12.35 13.36 6.63 0 11.84-5.63 11.84-13.36z"/>
+      <path fill="#34A853" d="M225 3v65h-9.5V3h9.5z"/>
+      <path fill="#4285F4" d="M262.02 54.48l7.56 5.04c-2.44 3.61-8.32 9.83-18.48 9.83-12.6 0-22.01-9.74-22.01-22.18 0-13.19 9.49-22.18 20.92-22.18 11.51 0 17.14 9.16 18.98 14.11l1.01 2.52-29.65 12.28c2.27 4.45 5.8 6.72 10.75 6.72 4.96 0 8.4-2.44 10.92-6.14zm-23.27-7.98l19.82-8.23c-1.09-2.77-4.37-4.7-8.23-4.7-4.95 0-11.84 4.37-11.59 12.93z"/>
+      <path fill="#EA4335" d="M35.29 41.41V32H67c.31 1.64.47 3.58.47 5.68 0 7.06-1.93 15.79-8.15 22.01-6.05 6.3-13.78 9.66-24.02 9.66C16.32 69.35.36 53.89.36 34.91.36 15.93 16.32.47 35.3.47c10.5 0 17.98 4.12 23.6 9.49l-6.64 6.64c-4.03-3.78-9.49-6.72-16.97-6.72-13.86 0-24.7 11.17-24.7 25.03 0 13.86 10.84 25.03 24.7 25.03 8.99 0 14.11-3.61 17.39-6.89 2.66-2.66 4.41-6.46 5.1-11.65l-22.49.01z"/>
+    </svg>
+  </div>
+  <div class="page-title">
+    <span class="material-icons-outlined">slideshow</span>
+    幻灯片
+  </div>
+  <div class="top-spacer"></div>
+  <button class="theme-toggle" id="themeToggle" title="切换深色模式">
+    <span class="material-icons-outlined" id="themeIcon">dark_mode</span>
+  </button>
+  <div id="userArea"></div>
+</div>
+
+<div class="main" id="main"></div>
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h3>新建幻灯片</h3>
+    <label>演示文稿标题</label>
+    <input type="text" id="slideTitle" placeholder="例如：我的演示">
+    <div class="modal-actions">
+      <button class="cancel" id="modalCancel">取消</button>
+      <button class="confirm" id="modalConfirm">创建</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function() {
+  // ========== 统一 Token 模式 ==========
+  const STORAGE_TOKEN = 'gm_token';
+  const STORAGE_USER = 'gm_user';
+  const STORAGE_THEME = 'gm_theme';
+
+  function safeGet(key, def) {
+    try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : def; }
+    catch(e) { return def; }
+  }
+  function safeSet(key, val) {
+    try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {}
+  }
+  function safeRemove(key) {
+    try { localStorage.removeItem(key); } catch(e) {}
+  }
+  function requireToken() {
+    const token = safeGet(STORAGE_TOKEN, null);
+    if (!token) {
+      const next = location.pathname.split('/').pop() || 'index.html';
+      location.href = 'auth.html?next=' + encodeURIComponent(next);
+      return null;
+    }
+    return token;
+  }
+  function loadUser() { return safeGet(STORAGE_USER, null); }
+  function signOut() {
+    safeRemove(STORAGE_TOKEN);
+    safeRemove(STORAGE_USER);
+    safeRemove('gm_token_time');
+    location.href = 'auth.html';
+  }
+
+  const accessToken = requireToken();
+  if (!accessToken) return;
+  const currentUser = loadUser();
+
+  // ========== 元素 ==========
+  const $ = id => document.getElementById(id);
+  const main = $('main');
+  const userArea = $('userArea');
+  const themeToggle = $('themeToggle');
+  const themeIcon = $('themeIcon');
+  const toast = $('toast');
+  const modalOverlay = $('modalOverlay');
+  const slideTitle = $('slideTitle');
+
+  // ========== 工具 ==========
+  function toastMsg(msg, type = '') {
+    toast.textContent = msg;
+    toast.className = 'toast show ' + type;
+    setTimeout(() => toast.className = 'toast ' + type, 2500);
+  }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[c]);
+  }
+  function formatTime(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso), now = new Date(), diff = (now - d) / 1000;
+    if (diff < 3600) return Math.floor(diff / 60) + ' 分钟前';
+    if (diff < 86400) return Math.floor(diff / 3600) + ' 小时前';
+    if (diff < 2592000) return Math.floor(diff / 86400) + ' 天前';
+    return d.toLocaleDateString('zh-CN');
+  }
+
+  // ========== 深色模式 ==========
+  function applyTheme(t) {
+    if (t === 'dark') { document.body.classList.add('dark'); themeIcon.textContent = 'light_mode'; }
+    else { document.body.classList.remove('dark'); themeIcon.textContent = 'dark_mode'; }
+  }
+  applyTheme(safeGet(STORAGE_THEME, 'light'));
+  themeToggle.addEventListener('click', () => {
+    const t = document.body.classList.contains('dark') ? 'light' : 'dark';
+    applyTheme(t);
+    safeSet(STORAGE_THEME, t);
+  });
+
+  // ========== 用户徽章 ==========
+  function renderUserBadge() {
+    if (!currentUser) { userArea.innerHTML = ''; return; }
+    userArea.innerHTML = `
+      <div class="user-badge" id="userBadge" title="点击退出">
+        <img src="${escapeHtml(currentUser.picture || '')}" alt="">
+        <span class="name">${escapeHtml(currentUser.name || currentUser.email || '')}</span>
+      </div>
+    `;
+    $('userBadge').addEventListener('click', () => {
+      if (confirm('退出登录？')) signOut();
+    });
+  }
+
+  // ========== API ==========
+  async function apiRequest(url, options = {}) {
+    options.headers = options.headers || {};
+    options.headers['Authorization'] = 'Bearer ' + accessToken;
+    const res = await fetch(url, options);
+    if (res.status === 401) {
+      toastMsg('登录已过期，请重新登录', 'error');
+      setTimeout(signOut, 1000);
+      throw new Error('unauthorized');
+    }
+    return res;
+  }
+
+  // 列出所有 Google Slides（通过 Drive API 查询 MIME type）
+  async function listSlides() {
+    const url = 'https://www.googleapis.com/drive/v3/files?' +
+      'pageSize=100&' +
+      'q=' + encodeURIComponent("mimeType='application/vnd.google-apps.presentation' and trashed=false") +
+      '&fields=files(id,name,modifiedTime,webViewLink)&' +
+      'orderBy=modifiedTime desc';
+    const res = await apiRequest(url);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || ('HTTP ' + res.status));
+    }
+    const data = await res.json();
+    return data.files || [];
+  }
+
+  // 创建新幻灯片
+  async function createSlide(title) {
+    const url = 'https://slides.googleapis.com/v1/presentations';
+    const res = await apiRequest(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: title })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || ('HTTP ' + res.status));
+    }
+    return res.json();
+  }
+
+  // 删除幻灯片
+  async function deleteSlide(fileId) {
+    const url = 'https://www.googleapis.com/drive/v3/files/' + fileId;
+    const res = await apiRequest(url, { method: 'DELETE' });
+    if (!res.ok && res.status !== 204) throw new Error('删除失败 HTTP ' + res.status);
+  }
+
+  // ========== 渲染 ==========
+  function renderUI() {
+    main.innerHTML = `
+      <div class="toolbar">
+        <button class="btn-primary" id="newSlideBtn">
+          <span class="material-icons-outlined">add</span>
+          新建幻灯片
+        </button>
+        <button class="btn-secondary" id="refreshBtn">
+          <span class="material-icons-outlined">refresh</span>
+          刷新
+        </button>
+        <div class="count-info" id="countInfo"></div>
+      </div>
+      <div class="slide-list" id="slideList">
+        <div class="loading"><div class="spinner"></div>加载中…</div>
+      </div>
+    `;
+    $('newSlideBtn').addEventListener('click', openNewSlide);
+    $('refreshBtn').addEventListener('click', loadSlides);
+    loadSlides();
+  }
+
+  async function loadSlides() {
+    const list = $('slideList');
+    if (!list) return;
+    list.innerHTML = '<div class="loading"><div class="spinner"></div>加载中…</div>';
+    try {
+      const slides = await listSlides();
+      const countEl = $('countInfo');
+      if (countEl) countEl.textContent = `共 ${slides.length} 个演示文稿`;
+      if (slides.length === 0) {
+        list.innerHTML = `
+          <div class="empty-state">
+            <span class="material-icons-outlined">slideshow</span>
+            <div>还没有幻灯片</div>
+            <div style="font-size:12px;">点上方「新建幻灯片」创建第一个</div>
+          </div>
+        `;
+        return;
+      }
+      list.innerHTML = '';
+      slides.forEach((s, i) => {
+        const item = document.createElement('div');
+        item.className = 'slide-item';
+        item.style.animationDelay = (i * 25) + 'ms';
+        item.innerHTML = `
+          <div class="slide-icon"><span class="material-icons-outlined">slideshow</span></div>
+          <div class="slide-info">
+            <div class="slide-title">${escapeHtml(s.name || '未命名演示文稿')}</div>
+            <div class="slide-meta">修改于 ${formatTime(s.modifiedTime)}</div>
+          </div>
+          <div class="slide-actions">
+            <button data-action="delete" title="删除">
+              <span class="material-icons-outlined" style="font-size:18px;">delete</span>
+            </button>
+          </div>
+        `;
+        item.addEventListener('click', (e) => {
+          if (e.target.closest('[data-action="delete"]')) return;
+          if (s.webViewLink) window.open(s.webViewLink, '_blank');
+        });
+        item.querySelector('[data-action="delete"]').addEventListener('click', async (e) => {
+          e.stopPropagation();
+          if (!confirm('确定删除「' + (s.name || '未命名') + '」？')) return;
+          try {
+            await deleteSlide(s.id);
+            toastMsg('已删除', 'success');
+            loadSlides();
+          } catch(err) {
+            toastMsg('删除失败：' + err.message, 'error');
+          }
+        });
+        list.appendChild(item);
+      });
+    } catch(e) {
+      list.innerHTML = `<div class="empty-state">加载失败：${escapeHtml(e.message)}</div>`;
+    }
+  }
+
+  function openNewSlide() {
+    slideTitle.value = '';
+    modalOverlay.classList.add('open');
+    slideTitle.focus();
+  }
+  function closeModal() { modalOverlay.classList.remove('open'); }
+  $('modalCancel').addEventListener('click', closeModal);
+  modalOverlay.addEventListener('click', (e) => {
+    if (e.target === modalOverlay) closeModal();
+  });
+  $('modalConfirm').addEventListener('click', async () => {
+    const title = slideTitle.value.trim();
+    if (!title) { toastMsg('请输入标题', 'error'); return; }
+    try {
+      const created = await createSlide(title);
+      toastMsg('已创建', 'success');
+      closeModal();
+      if (created.presentationId) {
+        window.open('https://docs.google.com/presentation/d/' + created.presentationId, '_blank');
+      }
+      loadSlides();
+    } catch(e) {
+      toastMsg('创建失败：' + e.message, 'error');
+    }
+  });
+
+  // ========== 启动 ==========
+  renderUserBadge();
+  renderUI();
+})();
+</script>
+</body>
+</html>

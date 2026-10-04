@@ -96,16 +96,17 @@
         const CLIENT_ID = '190052147870-7nijunioqnib8n6ma9etn7pnfgvfrg0u.apps.googleusercontent.com';
         const REDIRECT_URI = window.location.origin + window.location.pathname;
 
-        // 所有范围，一次性请求
-        const ALL_SCOPES = [
-            'openid', 'email', 'profile',
-            'https://www.googleapis.com/auth/drive.file',
-            'https://www.googleapis.com/auth/spreadsheets',
-            'https://www.googleapis.com/auth/calendar.events',
-            'https://www.googleapis.com/auth/tasks',
-            'https://www.googleapis.com/auth/contacts.readonly'
-        ].join(' ');
-
+// 所有范围，一次性请求
+const ALL_SCOPES = [
+  'openid', 'email', 'profile',
+  'https://www.googleapis.com/auth/drive.file',
+  'https://www.googleapis.com/auth/spreadsheets',
+  'https://www.googleapis.com/auth/calendar.events',
+  'https://www.googleapis.com/auth/tasks',
+  'https://www.googleapis.com/auth/documents',
+  'https://www.googleapis.com/auth/contacts.readonly',
+  'https://www.googleapis.com/auth/presentations'
+].join(' ');
         const STORAGE_TOKEN = 'gm_token';
         const STORAGE_USER = 'gm_user';
         const STORAGE_TOKEN_TIME = 'gm_token_time';

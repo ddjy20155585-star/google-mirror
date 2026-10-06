@@ -1,280 +1,415 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Google 镜像站 · 地图</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Roboto', arial, sans-serif; }
-        html, body { height: 100%; background: #fff; color: #202124; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Google 镜像站 · 地图</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Roboto', arial, sans-serif; }
+html, body { height: 100%; }
+.layout { display: flex; flex-direction: column; height: 100%; }
 
-        .layout { display: flex; flex-direction: column; height: 100%; }
+.top-bar {
+  display: flex; align-items: center; gap: 20px;
+  padding: 12px 24px;
+  border-bottom: 1px solid #dfe1e5;
+  background: #fff; flex-shrink: 0; z-index: 1000;
+  position: relative;
+}
+.logo-mini { display: flex; align-items: center; height: 28px; cursor: pointer; flex-shrink: 0; }
+.logo-mini svg { height: 28px; width: auto; display: block; }
+.search-box {
+  flex: 1; max-width: 560px;
+  display: flex; align-items: center;
+  background: #fff; border: 1px solid #dfe1e5;
+  border-radius: 24px; height: 42px;
+  padding: 0 8px 0 16px;
+  transition: box-shadow 0.2s;
+}
+.search-box:hover, .search-box:focus-within {
+  box-shadow: 0 1px 6px rgba(32,33,36,0.28); border-color: transparent;
+}
+.search-box input {
+  flex: 1; border: none; outline: none;
+  font-size: 15px; background: transparent; color: #202124;
+}
+.search-box .material-icons-outlined {
+  font-size: 22px; color: #5f6368;
+  padding: 8px; border-radius: 50%; cursor: pointer;
+}
+.search-box .material-icons-outlined:hover { background: rgba(60,64,67,0.08); }
 
-        .top-bar {
-            display: flex; align-items: center; gap: 20px;
-            padding: 12px 24px;
-            border-bottom: 1px solid #dfe1e5;
-            background: #fff; flex-shrink: 0; z-index: 1000;
-        }
+.engine-switch {
+  margin-left: auto; display: flex;
+  background: #f1f3f4; border-radius: 24px; padding: 3px;
+  flex-shrink: 0;
+}
+.engine-btn {
+  border: none; background: transparent;
+  padding: 6px 14px; border-radius: 20px;
+  font-size: 13px; color: #5f6368; cursor: pointer;
+  display: flex; align-items: center; gap: 4px;
+  transition: all 0.15s;
+}
+.engine-btn:hover { color: #202124; }
+.engine-btn.active {
+  background: #fff; color: #1a73e8;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+.engine-btn .material-icons-outlined { font-size: 16px; }
 
-        /* ★ Google 官方 SVG Logo（颜色精准） */
-        .logo-mini {
-            flex-shrink: 0; cursor: pointer; user-select: none;
-            display: flex; align-items: center;
-            height: 28px;
-        }
-        .logo-mini svg {
-            height: 28px;
-            width: auto;
-            display: block;
-        }
+.map-area { flex: 1; position: relative; }
+#map { width: 100%; height: 100%; background: #e5e3df; }
 
-        .search-box {
-            flex: 1; max-width: 560px;
-            display: flex; align-items: center;
-            background: #fff; border: 1px solid #dfe1e5;
-            border-radius: 24px; height: 42px;
-            padding: 0 8px 0 16px;
-            transition: box-shadow 0.2s;
-        }
-        .search-box:hover, .search-box:focus-within {
-            box-shadow: 0 1px 6px rgba(32,33,36,0.28); border-color: transparent;
-        }
-        .search-box input {
-            flex: 1; border: none; outline: none;
-            font-size: 15px; background: transparent; color: #202124;
-        }
-        .search-box .material-icons-outlined {
-            font-size: 22px; color: #5f6368;
-            padding: 8px; border-radius: 50%; cursor: pointer;
-            transition: background 0.15s;
-        }
-        .search-box .material-icons-outlined:hover { background: rgba(60,64,67,0.08); }
+/* 提示条 */
+.banner {
+  position: absolute; top: 16px; left: 50%; transform: translateX(-50%);
+  background: #fef7e0; color: #b06000;
+  padding: 8px 20px; border-radius: 20px;
+  font-size: 13px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  z-index: 500; display: none;
+}
+.banner.show { display: block; }
 
-        .mode-switch {
-            display: flex; gap: 4px;
-            background: #f1f3f4; border-radius: 24px; padding: 3px;
-            flex-shrink: 0;
-        }
-        .mode-btn {
-            border: none; background: transparent;
-            padding: 6px 12px; border-radius: 20px;
-            font-size: 13px; color: #5f6368; cursor: pointer;
-            display: flex; align-items: center; gap: 4px;
-            transition: all 0.15s;
-        }
-        .mode-btn:hover { color: #202124; }
-        .mode-btn.active {
-            background: #fff; color: #1a73e8;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-        .mode-btn .material-icons-outlined { font-size: 16px; }
+/* 加载中遮罩 */
+.loading-mask {
+  position: absolute; inset: 0;
+  background: rgba(255,255,255,0.85);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 16px; z-index: 600;
+  color: #5f6368; font-size: 14px;
+}
+.loading-mask.hide { display: none; }
+.spinner {
+  width: 40px; height: 40px;
+  border: 4px solid rgba(60,64,67,0.1);
+  border-top-color: #1a73e8;
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
 
-        .map-area { flex: 1; position: relative; }
-        #map { width: 100%; height: 100%; background: #e5e3df; }
-
-        .map-popup {
-            position: fixed; background: #fff;
-            border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.2);
-            padding: 12px 16px; font-size: 13px;
-            display: none; z-index: 9999;
-            min-width: 200px;
-        }
-        .map-popup.open { display: block; }
-        .map-popup .coord { color: #5f6368; font-family: monospace; font-size: 12px; }
-        .map-popup .actions { display: flex; gap: 6px; margin-top: 8px; }
-        .map-popup button {
-            border: 1px solid #dadce0; background: #fff;
-            color: #1a73e8; font-size: 12px;
-            padding: 5px 10px; border-radius: 4px; cursor: pointer;
-        }
-        .map-popup button:hover { background: #f1f3f4; }
-
-        .hint-badge {
-            position: absolute; bottom: 20px; left: 20px;
-            background: rgba(255,255,255,0.95);
-            border-radius: 20px; padding: 6px 14px;
-            font-size: 12px; color: #5f6368;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            z-index: 500;
-        }
-
-        @media (max-width: 600px) {
-            .top-bar { gap: 10px; padding: 10px 12px; flex-wrap: wrap; }
-            .search-box { max-width: none; }
-            .mode-switch { margin-left: auto; }
-            .logo-mini svg { height: 22px; }
-        }
-    </style>
+@media (max-width: 600px) {
+  .top-bar { gap: 10px; padding: 10px 12px; }
+  .engine-switch { display: none; }
+}
+</style>
 </head>
 <body>
-    <div class="layout">
 
-        <div class="top-bar">
-            <!-- ★ Google 官方 SVG Logo -->
-            <div class="logo-mini" onclick="location.href='index.html'" title="返回首页">
-                <svg viewBox="0 0 272 92" xmlns="http://www.w3.org/2000/svg">
-                    <path fill="#4285F4" d="M115.75 47.18c0 12.77-9.99 22.18-22.25 22.18s-22.25-9.41-22.25-22.18C71.25 34.32 81.24 25 93.5 25s22.25 9.32 22.25 22.18zm-9.74 0c0-7.98-5.79-13.44-12.51-13.44S80.99 39.2 80.99 47.18c0 7.9 5.79 13.44 12.51 13.44s12.51-5.55 12.51-13.44z"/>
-                    <path fill="#EA4335" d="M163.75 47.18c0 12.77-9.99 22.18-22.25 22.18s-22.25-9.41-22.25-22.18c0-12.85 9.99-22.18 22.25-22.18s22.25 9.32 22.25 22.18zm-9.74 0c0-7.98-5.79-13.44-12.51-13.44s-12.51 5.46-12.51 13.44c0 7.9 5.79 13.44 12.51 13.44s12.51-5.55 12.51-13.44z"/>
-                    <path fill="#FBBC05" d="M209.75 26.34v39.82c0 16.38-9.66 23.07-21.08 23.07-10.75 0-17.22-7.19-19.66-13.07l8.48-3.53c1.51 3.61 5.21 7.87 11.17 7.87 7.31 0 11.84-4.51 11.84-13v-3.19h-.34c-2.18 2.69-6.38 5.04-11.68 5.04-11.09 0-21.25-9.66-21.25-22.09 0-12.52 10.16-22.26 21.25-22.26 5.29 0 9.49 2.35 11.68 4.96h.34v-3.61h9.25zm-8.56 20.92c0-7.81-5.21-13.52-11.84-13.52-6.72 0-12.35 5.71-12.35 13.52 0 7.73 5.63 13.36 12.35 13.36 6.63 0 11.84-5.63 11.84-13.36z"/>
-                    <path fill="#34A853" d="M225 3v65h-9.5V3h9.5z"/>
-                    <path fill="#4285F4" d="M262.02 54.48l7.56 5.04c-2.44 3.61-8.32 9.83-18.48 9.83-12.6 0-22.01-9.74-22.01-22.18 0-13.19 9.49-22.18 20.92-22.18 11.51 0 17.14 9.16 18.98 14.11l1.01 2.52-29.65 12.28c2.27 4.45 5.8 6.72 10.75 6.72 4.96 0 8.4-2.44 10.92-6.14zm-23.27-7.98l19.82-8.23c-1.09-2.77-4.37-4.7-8.23-4.7-4.95 0-11.84 4.37-11.59 12.93z"/>
-                    <path fill="#EA4335" d="M35.29 41.41V32H67c.31 1.64.47 3.58.47 5.68 0 7.06-1.93 15.79-8.15 22.01-6.05 6.3-13.78 9.66-24.02 9.66C16.32 69.35.36 53.89.36 34.91.36 15.93 16.32.47 35.3.47c10.5 0 17.98 4.12 23.6 9.49l-6.64 6.64c-4.03-3.78-9.49-6.72-16.97-6.72-13.86 0-24.7 11.17-24.7 25.03 0 13.86 10.84 25.03 24.7 25.03 8.99 0 14.11-3.61 17.39-6.89 2.66-2.66 4.41-6.46 5.1-11.65l-22.49.01z"/>
-                </svg>
-            </div>
-
-            <div class="search-box">
-                <input type="text" id="searchInput" placeholder="搜索地点（跳转到 OpenStreetMap）" autocomplete="off">
-                <span class="material-icons-outlined" id="searchBtn" title="搜索">search</span>
-            </div>
-            <div class="mode-switch">
-                <button class="mode-btn" data-layer="amap">
-                    <span class="material-icons-outlined">map</span>标准
-                </button>
-                <button class="mode-btn" data-layer="carto">
-                    <span class="material-icons-outlined">public</span>浅色
-                </button>
-                <button class="mode-btn active" data-layer="satellite">
-                    <span class="material-icons-outlined">satellite_alt</span>卫星
-                </button>
-            </div>
-        </div>
-
-        <div class="map-area">
-            <div id="map"></div>
-
-            <div class="map-popup" id="mapPopup">
-                <div class="coord" id="popupCoord"></div>
-                <div class="actions">
-                    <button id="popupCopy">复制坐标</button>
-                </div>
-            </div>
-
-            <div class="hint-badge">点击地图任意位置查看坐标</div>
-        </div>
+<div class="layout">
+  <div class="top-bar">
+    <div class="logo-mini" onclick="location.href='index.html'">
+      <svg viewBox="0 0 272 92" xmlns="http://www.w3.org/2000/svg">
+        <path fill="#4285F4" d="M115.75 47.18c0 12.77-9.99 22.18-22.25 22.18s-22.25-9.41-22.25-22.18C71.25 34.32 81.24 25 93.5 25s22.25 9.32 22.25 22.18zm-9.74 0c0-7.98-5.79-13.44-12.51-13.44S80.99 39.2 80.99 47.18c0 7.9 5.79 13.44 12.51 13.44s12.51-5.55 12.51-13.44z"/>
+        <path fill="#EA4335" d="M163.75 47.18c0 12.77-9.99 22.18-22.25 22.18s-22.25-9.41-22.25-22.18c0-12.85 9.99-22.18 22.25-22.18s22.25 9.32 22.25 22.18zm-9.74 0c0-7.98-5.79-13.44-12.51-13.44s-12.51 5.46-12.51 13.44c0 7.9 5.79 13.44 12.51 13.44s12.51-5.55 12.51-13.44z"/>
+        <path fill="#FBBC05" d="M209.75 26.34v39.82c0 16.38-9.66 23.07-21.08 23.07-10.75 0-17.22-7.19-19.66-13.07l8.48-3.53c1.51 3.61 5.21 7.87 11.17 7.87 7.31 0 11.84-4.51 11.84-13v-3.19h-.34c-2.18 2.69-6.38 5.04-11.68 5.04-11.09 0-21.25-9.66-21.25-22.09 0-12.52 10.16-22.26 21.25-22.26 5.29 0 9.49 2.35 11.68 4.96h.34v-3.61h9.25zm-8.56 20.92c0-7.81-5.21-13.52-11.84-13.52-6.72 0-12.35 5.71-12.35 13.52 0 7.73 5.63 13.36 12.35 13.36 6.63 0 11.84-5.63 11.84-13.36z"/>
+        <path fill="#34A853" d="M225 3v65h-9.5V3h9.5z"/>
+        <path fill="#4285F4" d="M262.02 54.48l7.56 5.04c-2.44 3.61-8.32 9.83-18.48 9.83-12.6 0-22.01-9.74-22.01-22.18 0-13.19 9.49-22.18 20.92-22.18 11.51 0 17.14 9.16 18.98 14.11l1.01 2.52-29.65 12.28c2.27 4.45 5.8 6.72 10.75 6.72 4.96 0 8.4-2.44 10.92-6.14zm-23.27-7.98l19.82-8.23c-1.09-2.77-4.37-4.7-8.23-4.7-4.95 0-11.84 4.37-11.59 12.93z"/>
+        <path fill="#EA4335" d="M35.29 41.41V32H67c.31 1.64.47 3.58.47 5.68 0 7.06-1.93 15.79-8.15 22.01-6.05 6.3-13.78 9.66-24.02 9.66C16.32 69.35.36 53.89.36 34.91.36 15.93 16.32.47 35.3.47c10.5 0 17.98 4.12 23.6 9.49l-6.64 6.64c-4.03-3.78-9.49-6.72-16.97-6.72-13.86 0-24.7 11.17-24.7 25.03 0 13.86 10.84 25.03 24.7 25.03 8.99 0 14.11-3.61 17.39-6.89 2.66-2.66 4.41-6.46 5.1-11.65l-22.49.01z"/>
+      </svg>
     </div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script>
-    (function() {
-        const map = L.map('map', {
-            zoomControl: true,
-            attributionControl: true
-        }).setView([39.9042, 116.4074], 12);
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="搜索地点" autocomplete="off">
+      <span class="material-icons-outlined" id="searchBtn">search</span>
+    </div>
 
-        // ==================== 瓦片源 ====================
-        // 高德（国内秒开，中文）
-        const AMAP_STD = 'https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}';
-        // CARTO 浅色（国外 CDN，国内可能不通）
-        const CARTO_LIGHT = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
-        // Esri 卫星图（国内可通）
-        const ESRI_SAT = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+    <div class="engine-switch">
+      <button class="engine-btn active" data-engine="google">
+        <span class="material-icons-outlined">public</span>Google
+      </button>
+      <button class="engine-btn" data-engine="amap">
+        <span class="material-icons-outlined">map</span>高德
+      </button>
+    </div>
+  </div>
 
-        let currentLayer = null;
+  <div class="map-area">
+    <div id="map"></div>
+    <div class="banner" id="banner"></div>
+    <div class="loading-mask" id="loadingMask">
+      <div class="spinner"></div>
+      <div id="loadingText">正在加载地图…</div>
+    </div>
+  </div>
+</div>
 
-        function setLayer(type) {
-            if (currentLayer) map.removeLayer(currentLayer);
-            let url, options;
-            if (type === 'amap') {
-                url = AMAP_STD;
-                options = {
-                    subdomains: ['1', '2', '3', '4'],
-                    maxZoom: 18,
-                    attribution: '&copy; 高德地图'
-                };
-            } else if (type === 'carto') {
-                url = CARTO_LIGHT;
-                options = {
-                    subdomains: 'abcd',
-                    maxZoom: 19,
-                    attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; OSM'
-                };
-            } else {
-                url = ESRI_SAT;
-                options = {
-                    maxZoom: 19,
-                    attribution: '&copy; <a href="https://www.esri.com/">Esri</a>'
-                };
-            }
-            currentLayer = L.tileLayer(url, options).addTo(map);
+<script>
+(function() {
+  const GOOGLE_MAPS_KEY = 'AIzaSyAuUgsVDYbc6bWQSSnP792zm-HUkOVdTj4';
+  const STORAGE_ENGINE = 'gm_map_engine';
+
+  const $ = id => document.getElementById(id);
+  const searchInput = $('searchInput');
+  const searchBtn = $('searchBtn');
+  const banner = $('banner');
+  const loadingMask = $('loadingMask');
+  const loadingText = $('loadingText');
+
+  let currentEngine = null;     // 'google' | 'amap'
+  let googleMap = null;         // google.maps.Map 实例
+  let googleMarker = null;
+  let leafletMap = null;        // L.Map 实例
+  let leafletMarker = null;
+  let amapTile = null;          // 高德瓦片图层
+
+  function showBanner(text) {
+    banner.textContent = text;
+    banner.classList.add('show');
+    setTimeout(() => banner.classList.remove('show'), 3500);
+  }
+  function showLoading(text) {
+    loadingText.textContent = text || '正在加载地图…';
+    loadingMask.classList.remove('hide');
+  }
+  function hideLoading() {
+    loadingMask.classList.add('hide');
+  }
+
+  // ============ 探测 Google Maps 可达性 ============
+  function checkGoogleMaps() {
+    return new Promise(resolve => {
+      const img = new Image();
+      let done = false;
+      const timer = setTimeout(() => {
+        if (done) return;
+        done = true;
+        resolve(false);
+      }, 2500);
+      img.onload = () => {
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        resolve(true);
+      };
+      img.onerror = () => {
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        resolve(false);
+      };
+      img.src = 'https://maps.gstatic.com/mapfiles/api-3/images/spotlight-poi3.png?_t=' + Date.now();
+    });
+  }
+
+  // ============ 加载 Google Maps JS API ============
+  function loadGoogleMapsScript() {
+    return new Promise((resolve, reject) => {
+      if (window.google && window.google.maps) return resolve();
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_KEY}&libraries=places`;
+      script.async = true;
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error('Google Maps 脚本加载失败'));
+      document.head.appendChild(script);
+    });
+  }
+
+  // ============ 加载 Leaflet 高德 ============
+  function loadLeafletScript() {
+    return new Promise((resolve, reject) => {
+      if (window.L) return resolve();
+      const script = document.createElement('script');
+      script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+      script.async = true;
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error('Leaflet 加载失败'));
+      document.head.appendChild(script);
+    });
+  }
+
+  // ============ 销毁现有地图 ============
+  function destroyMap() {
+    if (googleMap) {
+      googleMap = null;
+      googleMarker = null;
+    }
+    if (leafletMap) {
+      leafletMap.remove();
+      leafletMap = null;
+      leafletMarker = null;
+      amapTile = null;
+    }
+    $('map').innerHTML = '';
+    $('map').removeAttribute('style');
+    $('map').style.width = '100%';
+    $('map').style.height = '100%';
+  }
+
+  // ============ 初始化 Google 地图 ============
+  function initGoogleMap() {
+    return loadGoogleMapsScript().then(() => {
+      googleMap = new google.maps.Map($('map'), {
+        center: { lat: 39.9042, lng: 116.4074 },
+        zoom: 12,
+        mapTypeControl: true,
+        fullscreenControl: true,
+        streetViewControl: true
+      });
+      googleMap.addListener('click', (e) => {
+        placeGoogleMarker(e.latLng.lat(), e.latLng.lng());
+      });
+      hideLoading();
+    });
+  }
+
+  function placeGoogleMarker(lat, lng) {
+    if (!googleMap) return;
+    if (googleMarker) googleMarker.setMap(null);
+    googleMarker = new google.maps.Marker({
+      position: { lat, lng },
+      map: googleMap,
+      animation: google.maps.Animation.DROP
+    });
+  }
+
+  // ============ 初始化 Leaflet 高德地图 ============
+  function initLeafletMap() {
+    return loadLeafletScript().then(() => {
+      leafletMap = L.map('map').setView([39.9042, 116.4074], 12);
+      amapTile = L.tileLayer(
+        'https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}',
+        {
+          subdomains: ['1', '2', '3', '4'],
+          maxZoom: 18,
+          attribution: '&copy; 高德地图'
         }
-        // 默认卫星图（国内可通）
-        setLayer('satellite');
+      ).addTo(leafletMap);
+      leafletMap.on('click', (e) => {
+        placeLeafletMarker(e.latlng.lat, e.latlng.lng);
+      });
+      hideLoading();
+    });
+  }
 
-        // ==================== 图层切换 ====================
-        document.querySelectorAll('.mode-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                setLayer(btn.dataset.layer);
-            });
-        });
+  function placeLeafletMarker(lat, lng) {
+    if (!leafletMap) return;
+    if (leafletMarker) leafletMap.removeLayer(leafletMarker);
+    leafletMarker = L.marker([lat, lng]).addTo(leafletMap);
+    leafletMap.setView([lat, lng], leafletMap.getZoom());
+  }
 
-        // ==================== 点击地图显示坐标 ====================
-        const popup = document.getElementById('mapPopup');
-        const popupCoord = document.getElementById('popupCoord');
-        let lastLatLng = null;
+  // ============ 切换引擎 ============
+  async function switchEngine(engine) {
+    if (currentEngine === engine) return;
+    currentEngine = engine;
+    document.querySelectorAll('.engine-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.engine === engine);
+    });
+    try { localStorage.setItem(STORAGE_ENGINE, engine); } catch(e) {}
 
-        map.on('click', (e) => {
-            lastLatLng = e.latlng;
-            const lat = e.latlng.lat.toFixed(6);
-            const lng = e.latlng.lng.toFixed(6);
-            popupCoord.textContent = `纬度 ${lat}  经度 ${lng}`;
+    showLoading(engine === 'google' ? '正在加载 Google Maps…' : '正在加载高德地图…');
+    destroyMap();
 
-            const containerPoint = map.latLngToContainerPoint(e.latlng);
-            const rect = map.getContainer().getBoundingClientRect();
-            popup.style.left = (rect.left + containerPoint.x + 12) + 'px';
-            popup.style.top = (rect.top + containerPoint.y + 12) + 'px';
-            popup.classList.add('open');
-        });
-
-        document.addEventListener('click', (e) => {
-            if (!popup.contains(e.target)) {
-                popup.classList.remove('open');
-            }
-        });
-
-        document.getElementById('popupCopy').addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (lastLatLng) {
-                const text = `${lastLatLng.lat.toFixed(6)},${lastLatLng.lng.toFixed(6)}`;
-                navigator.clipboard.writeText(text).then(() => {
-                    popupCoord.textContent = '已复制：' + text;
-                    setTimeout(() => {
-                        popupCoord.textContent = `纬度 ${lastLatLng.lat.toFixed(6)}  经度 ${lastLatLng.lng.toFixed(6)}`;
-                    }, 1500);
-                });
-            }
-        });
-
-        // ==================== 搜索 ====================
-        const searchInput = document.getElementById('searchInput');
-        const searchBtn = document.getElementById('searchBtn');
-
-        function doSearch() {
-            const q = searchInput.value.trim();
-            if (!q) { searchInput.focus(); return; }
-            window.open('https://www.openstreetmap.org/search?query=' + encodeURIComponent(q), '_blank');
+    try {
+      if (engine === 'google') {
+        // 先探测能否访问 Google Maps
+        const ok = await checkGoogleMaps();
+        if (!ok) {
+          showBanner('无法访问 Google Maps，已自动切换回高德');
+          setTimeout(() => switchEngine('amap'), 1200);
+          return;
         }
-        searchBtn.addEventListener('click', doSearch);
-        searchInput.addEventListener('keydown', e => {
-            if (e.key === 'Enter') doSearch();
-        });
+        await initGoogleMap();
+      } else {
+        await initLeafletMap();
+      }
+    } catch (e) {
+      console.error(e);
+      showBanner('地图加载失败：' + e.message);
+      hideLoading();
+      // 如果 Google 失败，自动回退到高德
+      if (engine === 'google') {
+        setTimeout(() => switchEngine('amap'), 1200);
+      }
+    }
+  }
 
-        // ==================== 定位 ====================
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                    map.setView([pos.coords.latitude, pos.coords.longitude], 14);
-                },
-                () => {},
-                { timeout: 3000 }
-            );
+  // ============ 搜索 ============
+  async function doSearch() {
+    const q = searchInput.value.trim();
+    if (!q) { searchInput.focus(); return; }
+
+    if (currentEngine === 'google' && googleMap) {
+      // Google：用 Places 或 Geocoding
+      if (window.google.maps.Geocoder) {
+        const geocoder = new google.maps.Geocoder();
+        geocoder.geocode({ address: q }, (results, status) => {
+          if (status === 'OK' && results[0]) {
+            const loc = results[0].geometry.location;
+            googleMap.setCenter(loc);
+            googleMap.setZoom(14);
+            placeGoogleMarker(loc.lat(), loc.lng());
+          } else {
+            showBanner('未找到该地点');
+          }
+        });
+      }
+    } else if (currentEngine === 'amap' && leafletMap) {
+      // 高德：用 Nominatim（OSM 免费地理编码）
+      try {
+        const url = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&accept-language=zh-CN&q=' + encodeURIComponent(q);
+        const res = await fetch(url, {
+          headers: { 'User-Agent': 'Google-Mirror-Map/1.0 (https://ddjy20155585-star.github.io/google-mirror)' }
+        });
+        if (!res.ok) throw new Error('Nominatim 返回 ' + res.status);
+        const list = await res.json();
+        if (!list.length) {
+          showBanner('未找到该地点');
+          return;
         }
-    })();
-    </script>
+        const lat = parseFloat(list[0].lat);
+        const lon = parseFloat(list[0].lon);
+        leafletMap.setView([lat, lon], 14);
+        placeLeafletMarker(lat, lon);
+      } catch(e) {
+        console.warn('Nominatim 搜索失败：', e);
+        showBanner('搜索失败，稍后再试');
+      }
+    }
+  }
+
+  searchBtn.addEventListener('click', doSearch);
+  searchInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') doSearch();
+  });
+
+  // ============ 引擎切换按钮 ============
+  document.querySelectorAll('.engine-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      switchEngine(btn.dataset.engine);
+    });
+  });
+
+  // ============ 启动 ============
+  (async function init() {
+    showLoading('正在检测网络…');
+
+    // 用户上次的选择优先
+    let savedEngine = null;
+    try { savedEngine = localStorage.getItem(STORAGE_ENGINE); } catch(e) {}
+
+    if (savedEngine === 'google' || savedEngine === 'amap') {
+      await switchEngine(savedEngine);
+      return;
+    }
+
+    // 首次打开：自动探测
+    const canGoogle = await checkGoogleMaps();
+    if (canGoogle) {
+      await switchEngine('google');
+    } else {
+      await switchEngine('amap');
+    }
+  })();
+
+  // 初始聚焦
+  window.addEventListener('load', () => searchInput.focus());
+})();
+</script>
 </body>
 </html>

@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
 <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined">
 <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+<script src="https://www.recaptcha.net/recaptcha/api.js" async defer></script>
 <script src="sync.js"></script>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Roboto', arial, sans-serif; }
@@ -484,6 +485,12 @@ body.dark .promo-banner { background: #1a3a5c; }
 </style>
 </head>
 <body>
+<!-- reCAPTCHA 验证遮罩 -->
+<div id="recaptcha-mask" style="position: fixed; inset: 0; background: #fff; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px;">
+    <div style="font-size: 32px; font-weight: 500; color: #202124; font-family: 'Roboto', arial, sans-serif;">Google</div>
+    <div class="g-recaptcha" data-sitekey="6Lf-1uEtAAAAAFVMVMiAeGmrG5HUxN5CPXZrpv5v" data-callback="onRecaptchaPass"></div>
+    <div style="font-size: 13px; color: #5f6368; font-family: 'Roboto', arial, sans-serif;">验证通过后进入镜像站</div>
+</div>
 
 <div class="top-bar">
   <a href="https://mail.google.com" data-external>Gmail</a>
@@ -1327,6 +1334,19 @@ if (window.gmSync) {
   });
 } 
 window.addEventListener('load', () => searchInput.focus());
+
+// reCAPTCHA 通过回调
+window.onRecaptchaPass = function(token) {
+    const mask = document.getElementById('recaptcha-mask');
+    if (mask) {
+        mask.style.transition = 'opacity 0.4s';
+        mask.style.opacity = '0';
+        setTimeout(() => mask.remove(), 400);
+    }
+    // 聚焦搜索框
+    const si = document.getElementById('searchInput');
+    if (si) si.focus();
+};
 })();
 </script>
 </body>

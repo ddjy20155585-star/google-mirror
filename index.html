@@ -1287,6 +1287,24 @@ body.dark .promo-banner { background: #1a3a5c; }
 
     window.addEventListener('load', () => searchInput.focus());
 
+// 开发者工具检测（温和版）
+(function detectDevTools() {
+    const threshold = 160;
+    let isOpen = false;
+    setInterval(function() {
+        const wDiff = window.outerWidth - window.innerWidth > threshold;
+        const hDiff = window.outerHeight - window.innerHeight > threshold;
+        if ((wDiff || hDiff) && !isOpen) {
+            isOpen = true;
+            console.log('%c⚠️ 检测到开发者工具已打开', 'color:#d93025;font-size:16px;font-weight:bold;');
+            console.log('%c本站为个人技术演示项目，请勿用于非法用途。', 'color:#5f6368;font-size:12px;');
+            console.log('%c仅用于学习与展示，与 Google 无任何关联。', 'color:#5f6368;font-size:12px;');
+        } else if (!wDiff && !hDiff && isOpen) {
+            isOpen = false;
+        }
+    }, 1000);
+})();
+
     // reCAPTCHA 通过回调
     window.onRecaptchaPass = function(token) {
         const mask = document.getElementById('recaptcha-mask');

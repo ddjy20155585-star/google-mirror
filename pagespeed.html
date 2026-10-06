@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Google 镜像站 · 网页测速</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Roboto', arial, sans-serif; }
+:root {
+  --bg: #fff; --text: #202124; --text-secondary: #5f6368;
+  --border: #dfe1e5; --hover: rgba(60,64,67,0.08); --card-bg: #fff;
+  --blue: #1a73e8; --green: #34a853; --yellow: #fbbc04; --red: #ea4335;
+}
+body.dark {
+  --bg: #202124; --text: #e8eaed; --text-secondary: #9aa0a6;
+  --border: #5f6368; --hover: rgba(232,234,237,0.08); --card-bg: #292a2d;
+}
+body {
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; display: flex; flex-direction: column;
+  transition: background 0.4s, color 0.4s;
+}
+.top-bar {
+  display: flex; align-items: center; gap: 16px;
+  padding: 14px 30px; border-bottom: 1px solid var(--border);
+  background: var(--bg); position: sticky; top: 0; z-index: 100;
+}
+.logo-mini { display: flex; align-items: center; height: 28px; cursor: pointer; }
+.logo-mini svg { height: 28px; width: auto; }
+.page-title {
+  font-size: 20px; font-weight: 500;
+  display: flex; align-items: center; gap: 6px;
+}
+.page-title .material-icons-outlined { font-size: 24px; color: var(--blue); }
+.top-spacer { flex: 1; }
+.theme-toggle {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: transparent; border: none;
+  color: var(--text-secondary); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.theme-toggle:hover { background: var(--hover); }
+.main { flex: 1; padding: 30px; max-width: 1000px; width: 100%; margin: 0 auto; }
+
+/* 搜索框 */
+.url-box {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--card-bg); border: 1px solid var(--border);
+  border-radius: 24px; height: 48px;
+  padding: 0 6px 0 18px; margin-bottom: 24px;
+  transition: box-shadow 0.2s;
+}
+.url-box:focus-within {
+  box-shadow: 0 1px 6px rgba(32,33,36,0.28);
+  border-color: transparent;
+}
+.url-box .material-icons-outlined { font-size: 22px; color: var(--text-secondary); }
+.url-box input {
+  flex: 1; border: none; outline: none; background: transparent;
+  font-size: 15px; color: var(--text); height: 100%;
+}
+.url-box button {
+  background: var(--blue); color: #fff; border: none;
+  padding: 10px 24px; border-radius: 20px;
+  font-size: 14px; font-weight: 500; cursor: pointer;
+  transition: background 0.15s;
+}
+.url-box button:hover { background: #1b66c9; }
+.url-box button:disabled { background: var(--border); cursor: not-allowed; }
+
+/* 评分卡 */
+.scores {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+  margin-bottom: 32px;
+}
+.score-card {
+  background: var(--card-bg); border-radius: 12px;
+  padding: 24px 16px; text-align: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  opacity: 0; animation: fadeUp 0.4s ease forwards;
+}
+.score-card:nth-child(2) { animation-delay: 0.1s; }
+.score-card:nth-child(3) { animation-delay: 0.2s; }
+.score-card:nth-child(4) { animation-delay: 0.3s; }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.score-ring {
+  width: 90px; height: 90px; margin: 0 auto 12px;
+  position: relative;
+}
+.score-ring svg {
+  width: 100%; height: 100%;
+  transform: rotate(-90deg);
+}
+.score-ring .bg {
+  fill: none; stroke: var(--hover); stroke-width: 6;
+}
+.score-ring .fg {
+  fill: none; stroke-width: 6;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 1s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.score-ring .val {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px; font-weight: 500;
+}
+.score-card .label {
+  font-size: 13px; color: var(--text-secondary);
+}
+
+/* 分类颜色 */
+.score-good { color: #1e8e3e; }
+.score-warn { color: #e37400; }
+.score-bad { color: #d93025; }
+.stroke-good { stroke: #1e8e3e; }
+.stroke-warn { stroke: #e37400; }
+.stroke-bad { stroke: #d93025; }
+
+/* 指标列表 */
+.section-title {
+  font-size: 16px; font-weight: 500; color: var(--text);
+  margin: 24px 0 12px 0;
+  display: flex; align-items: center; gap: 8px;
+}
+.section-title .material-icons-outlined { font-size: 20px; color: var(--blue); }
+.metrics {
+  background: var(--card-bg); border-radius: 12px;
+  overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+.metric-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+.metric-item:last-child { border-bottom: none; }
+.metric-item .name {
+  color: var(--text); display: flex; align-items: center; gap: 8px;
+}
+.metric-item .name .material-icons-outlined {
+  font-size: 18px; color: var(--text-secondary);
+}
+.metric-item .value {
+  font-weight: 500; font-size: 14px;
+  padding: 4px 10px; border-radius: 4px;
+}
+.value-good { background: #e6f4ea; color: #1e8e3e; }
+.value-warn { background: #fef7e0; color: #e37400; }
+.value-bad { background: #fce8e6; color: #d93025; }
+body.dark .value-good { background: rgba(52,168,83,0.2); color: #81c995; }
+body.dark .value-warn { background: rgba(251,188,4,0.2); color: #fdd663; }
+body.dark .value-bad { background: rgba(234,67,53,0.2); color: #f28b82; }
+
+/* 建议 */
+.audit-item {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.audit-item:last-child { border-bottom: none; }
+.audit-item .material-icons-outlined {
+  font-size: 20px; margin-top: 2px; flex-shrink: 0;
+}
+.audit-item .info { flex: 1; }
+.audit-item .title { font-size: 14px; color: var(--text); margin-bottom: 4px; }
+.audit-item .desc { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+
+/* 加载 / 错误 / 空 */
+.loading, .error-box, .empty {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; padding: 60px 20px; gap: 16px;
+  color: var(--text-secondary); font-size: 14px;
+}
+.spinner {
+  width: 40px; height: 40px;
+  border: 4px solid var(--hover); border-top-color: var(--blue);
+  border-radius: 50%; animation: spin 0.9s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 700px) {
+  .scores { grid-template-columns: repeat(2, 1fr); }
+  .top-bar { padding: 12px 16px; gap: 10px; }
+  .page-title { font-size: 16px; }
+  .main { padding: 16px; }
+}
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="logo-mini" onclick="location.href='index.html'">
+    <svg viewBox="0 0 272 92" xmlns="http://www.w3.org/2000/svg">
+      <path fill="#4285F4" d="M115.75 47.18c0 12.77-9.99 22.18-22.25 22.18s-22.25-9.41-22.25-22.18C71.25 34.32 81.24 25 93.5 25s22.25 9.32 22.25 22.18zm-9.74 0c0-7.98-5.79-13.44-12.51-13.44S80.99 39.2 80.99 47.18c0 7.9 5.79 13.44 12.51 13.44s12.51-5.55 12.51-13.44z"/>
+      <path fill="#EA4335" d="M163.75 47.18c0 12.77-9.99 22.18-22.25 22.18s-22.25-9.41-22.25-22.18c0-12.85 9.99-22.18 22.25-22.18s22.25 9.32 22.25 22.18zm-9.74 0c0-7.98-5.79-13.44-12.51-13.44s-12.51 5.46-12.51 13.44c0 7.9 5.79 13.44 12.51 13.44s12.51-5.55 12.51-13.44z"/>
+      <path fill="#FBBC05" d="M209.75 26.34v39.82c0 16.38-9.66 23.07-21.08 23.07-10.75 0-17.22-7.19-19.66-13.07l8.48-3.53c1.51 3.61 5.21 7.87 11.17 7.87 7.31 0 11.84-4.51 11.84-13v-3.19h-.34c-2.18 2.69-6.38 5.04-11.68 5.04-11.09 0-21.25-9.66-21.25-22.09 0-12.52 10.16-22.26 21.25-22.26 5.29 0 9.49 2.35 11.68 4.96h.34v-3.61h9.25zm-8.56 20.92c0-7.81-5.21-13.52-11.84-13.52-6.72 0-12.35 5.71-12.35 13.52 0 7.73 5.63 13.36 12.35 13.36 6.63 0 11.84-5.63 11.84-13.36z"/>
+      <path fill="#34A853" d="M225 3v65h-9.5V3h9.5z"/>
+      <path fill="#4285F4" d="M262.02 54.48l7.56 5.04c-2.44 3.61-8.32 9.83-18.48 9.83-12.6 0-22.01-9.74-22.01-22.18 0-13.19 9.49-22.18 20.92-22.18 11.51 0 17.14 9.16 18.98 14.11l1.01 2.52-29.65 12.28c2.27 4.45 5.8 6.72 10.75 6.72 4.96 0 8.4-2.44 10.92-6.14zm-23.27-7.98l19.82-8.23c-1.09-2.77-4.37-4.7-8.23-4.7-4.95 0-11.84 4.37-11.59 12.93z"/>
+      <path fill="#EA4335" d="M35.29 41.41V32H67c.31 1.64.47 3.58.47 5.68 0 7.06-1.93 15.79-8.15 22.01-6.05 6.3-13.78 9.66-24.02 9.66C16.32 69.35.36 53.89.36 34.91.36 15.93 16.32.47 35.3.47c10.5 0 17.98 4.12 23.6 9.49l-6.64 6.64c-4.03-3.78-9.49-6.72-16.97-6.72-13.86 0-24.7 11.17-24.7 25.03 0 13.86 10.84 25.03 24.7 25.03 8.99 0 14.11-3.61 17.39-6.89 2.66-2.66 4.41-6.46 5.1-11.65l-22.49.01z"/>
+    </svg>
+  </div>
+  <div class="page-title">
+    <span class="material-icons-outlined">speed</span>
+    网页测速
+  </div>
+  <div class="top-spacer"></div>
+  <button class="theme-toggle" id="themeToggle" title="切换深色模式">
+    <span class="material-icons-outlined" id="themeIcon">dark_mode</span>
+  </button>
+</div>
+
+<div class="main">
+  <div class="url-box">
+    <span class="material-icons-outlined">link</span>
+    <input type="url" id="urlInput" placeholder="输入网址，如 https://google.com" autocomplete="off">
+    <button id="analyzeBtn">分析</button>
+  </div>
+  <div id="result"></div>
+</div>
+
+<script>
+(function() {
+  const API_KEY = 'AIzaSyD1YDXejMYMKtwtIOfC0r-BieNNzaQcSUo';
+  const API_BASE = 'https://www.googleapis.com/pagespeedonline/v5/runPagespeed';
+
+  const $ = id => document.getElementById(id);
+  const urlInput = $('urlInput');
+  const analyzeBtn = $('analyzeBtn');
+  const result = $('result');
+  const themeToggle = $('themeToggle');
+  const themeIcon = $('themeIcon');
+
+  // 深色模式
+  function applyTheme(t) {
+    if (t === 'dark') { document.body.classList.add('dark'); themeIcon.textContent = 'light_mode'; }
+    else { document.body.classList.remove('dark'); themeIcon.textContent = 'dark_mode'; }
+  }
+  try { applyTheme(JSON.parse(localStorage.getItem('gm_theme')) || 'light'); } catch(e) { applyTheme('light'); }
+  themeToggle.addEventListener('click', () => {
+    const t = document.body.classList.contains('dark') ? 'light' : 'dark';
+    applyTheme(t);
+    try { localStorage.setItem('gm_theme', JSON.stringify(t)); } catch(e) {}
+  });
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[c]);
+  }
+  function normalizeUrl(u) {
+    u = u.trim();
+    if (!u) return '';
+    if (!/^https?:\/\//i.test(u)) u = 'https://' + u;
+    return u;
+  }
+  function scoreClass(score) {
+    if (score >= 0.9) return 'good';
+    if (score >= 0.5) return 'warn';
+    return 'bad';
+  }
+  function scoreLabel(score) {
+    return Math.round(score * 100);
+  }
+
+  function renderScoreCircle(label, score) {
+    const pct = scoreLabel(score);
+    const cls = scoreClass(score);
+    const circumference = 2 * Math.PI * 42; // r=42
+    const offset = circumference * (1 - score);
+    return `
+      <div class="score-card">
+        <div class="score-ring">
+          <svg viewBox="0 0 100 100">
+            <circle class="bg" cx="50" cy="50" r="42"></circle>
+            <circle class="fg stroke-${cls}" cx="50" cy="50" r="42"
+              stroke-dasharray="${circumference}"
+              stroke-dashoffset="${circumference}"></circle>
+          </svg>
+          <div class="val score-${cls}">${pct}</div>
+        </div>
+        <div class="label">${label}</div>
+      </div>
+    `;
+  }
+
+  function renderMetrics(audits) {
+    // 按顺序列出核心指标
+    const metricOrder = [
+      { id: 'first-contentful-paint', name: '首次内容绘制 (FCP)', icon: 'brush' },
+      { id: 'largest-contentful-paint', name: '最大内容绘制 (LCP)', icon: 'photo_size_select_large' },
+      { id: 'total-blocking-time', name: '总阻塞时间 (TBT)', icon: 'hourglass_empty' },
+      { id: 'cumulative-layout-shift', name: '累积布局偏移 (CLS)', icon: 'view_quilt' },
+      { id: 'speed-index', name: '速度指数 (SI)', icon: 'speed' }
+    ];
+    let html = '<div class="metrics">';
+    metricOrder.forEach(m => {
+      const audit = audits[m.id];
+      if (!audit) return;
+      const score = audit.score !== null ? audit.score : 1;
+      const cls = score >= 0.9 ? 'good' : score >= 0.5 ? 'warn' : 'bad';
+      const value = audit.displayValue || '—';
+      html += `
+        <div class="metric-item">
+          <div class="name">
+            <span class="material-icons-outlined">${m.icon}</span>
+            ${m.name}
+          </div>
+          <div class="value value-${cls}">${escapeHtml(value)}</div>
+        </div>
+      `;
+    });
+    html += '</div>';
+    return html;
+  }
+
+  function renderAudits(audits) {
+    // 找出得分低的（0 < score < 1），按分数升序
+    const failed = Object.values(audits)
+      .filter(a => a.score !== null && a.score < 1 && a.scoreDisplayMode !== 'notApplicable')
+      .sort((a, b) => a.score - b.score)
+      .slice(0, 10);
+    if (failed.length === 0) {
+      return '<div class="empty">🎉 没有需要改进的项目</div>';
+    }
+    let html = '<div class="metrics">';
+    failed.forEach(a => {
+      const icon = a.score === 0 ? 'error' : 'warning';
+      const color = a.score === 0 ? '#d93025' : '#e37400';
+      html += `
+        <div class="audit-item">
+          <span class="material-icons-outlined" style="color:${color}">${icon}</span>
+          <div class="info">
+            <div class="title">${escapeHtml(a.title || '')}</div>
+            <div class="desc">${escapeHtml((a.description || '').replace(/\[.*?\]\(.*?\)/g, '').slice(0, 200))}</div>
+          </div>
+        </div>
+      `;
+    });
+    html += '</div>';
+    return html;
+  }
+
+  async function analyze() {
+    const rawUrl = urlInput.value.trim();
+    if (!rawUrl) { urlInput.focus(); return; }
+    const url = normalizeUrl(rawUrl);
+
+    analyzeBtn.disabled = true;
+    result.innerHTML = '<div class="loading"><div class="spinner"></div>正在分析，可能需要 10~30 秒…</div>';
+
+    try {
+      // 请求 4 个类别
+      const categories = ['performance', 'accessibility', 'best-practices', 'seo']
+        .map(c => 'category=' + c).join('&');
+      const apiUrl = `${API_BASE}?url=${encodeURIComponent(url)}&${categories}&key=${API_KEY}`;
+      const res = await fetch(apiUrl);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error?.message || `请求失败 (${res.status})`);
+      }
+      const data = await res.json();
+      const lhr = data.lighthouseResult;
+      if (!lhr) throw new Error('未返回 Lighthouse 结果');
+
+      const cats = lhr.categories || {};
+      const audits = lhr.audits || {};
+
+      // 渲染四个评分
+      let html = '<div class="scores">';
+      html += renderScoreCircle('性能', cats.performance?.score ?? 0);
+      html += renderScoreCircle('无障碍', cats.accessibility?.score ?? 0);
+      html += renderScoreCircle('最佳实践', cats['best-practices']?.score ?? 0);
+      html += renderScoreCircle('SEO', cats.seo?.score ?? 0);
+      html += '</div>';
+
+      // 核心指标
+      html += '<div class="section-title"><span class="material-icons-outlined">analytics</span>核心指标</div>';
+      html += renderMetrics(audits);
+
+      // 优化建议
+      html += '<div class="section-title"><span class="material-icons-outlined">tips_and_updates</span>优化建议（Top 10）</div>';
+      html += renderAudits(audits);
+
+      result.innerHTML = html;
+
+      // 动画：让圆环从 0 走到实际分数
+      setTimeout(() => {
+        result.querySelectorAll('.score-ring .fg').forEach(circle => {
+          const circumference = 2 * Math.PI * 42;
+          const offset = parseFloat(circle.getAttribute('stroke-dashoffset'));
+          const target = circumference * (1 - (circumference - offset) / circumference);
+          const realOffset = circumference - (circumference - offset);
+          circle.setAttribute('stroke-dashoffset', realOffset);
+        });
+        // 上面那段简化处理，直接设回真实值
+        const scores = [
+          cats.performance?.score ?? 0,
+          cats.accessibility?.score ?? 0,
+          cats['best-practices']?.score ?? 0,
+          cats.seo?.score ?? 0
+        ];
+        result.querySelectorAll('.score-ring .fg').forEach((circle, i) => {
+          const circumference = 2 * Math.PI * 42;
+          circle.setAttribute('stroke-dashoffset', circumference * (1 - scores[i]));
+        });
+      }, 50);
+
+    } catch(e) {
+      console.error(e);
+      result.innerHTML = `
+        <div class="error-box">
+          <span class="material-icons-outlined" style="font-size:48px;color:#d93025;">error_outline</span>
+          <div>分析失败：${escapeHtml(e.message)}</div>
+          <div style="font-size:12px;color:var(--text-secondary);max-width:500px;text-align:center;line-height:1.6;">
+            可能原因：网址无法访问、API Key 无效、PageSpeed API 未启用、或配额用完。
+          </div>
+        </div>
+      `;
+    } finally {
+      analyzeBtn.disabled = false;
+    }
+  }
+
+  analyzeBtn.addEventListener('click', analyze);
+  urlInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') analyze();
+  });
+  urlInput.focus();
+})();
+</script>
+</body>
+</html>

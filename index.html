@@ -1340,58 +1340,14 @@ body.dark .promo-banner { background: #1a3a5c; }
     // reCAPTCHA 通过回调
  window.onRecaptchaPass = function(token) {
     const mask = document.getElementById('recaptcha-mask');
-    if (!mask) return;
-
-    // 1. 遮罩先变"验证成功"状态
-    mask.innerHTML = `
-        <div style="
-            width: 80px; height: 80px; border-radius: 50%;
-            background: #34a853;
-            display: flex; align-items: center; justify-content: center;
-            animation: successPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-        ">
-            <span class="material-icons-outlined" style="font-size:48px;color:#fff;">check</span>
-        </div>
-        <div style="font-size:18px; color:#1e8e3e; font-weight:500; margin-top:16px;">验证成功</div>
-        <div style="font-size:13px; color:#5f6368;">正在进入镜像站…</div>
-    `;
-
-    // 2. 500ms 后，遮罩缩小淡出
-    setTimeout(() => {
-        mask.style.transition = 'opacity 0.4s, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
+    if (mask) {
+        mask.style.transition = 'opacity 0.4s';
         mask.style.opacity = '0';
-        mask.style.transform = 'scale(0.92)';
         setTimeout(() => mask.remove(), 400);
-    }, 500);
-
-    // 3. 主页淡入 + 搜索框聚焦
-    document.body.style.transition = 'opacity 0.5s';
-    document.body.style.opacity = '0';
-    requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-            document.body.style.opacity = '1';
-        });
-    });
-    setTimeout(() => {
-        const si = document.getElementById('searchInput');
-        if (si) si.focus();
-    }, 900);
+    }
+    const si = document.getElementById('searchInput');
+    if (si) si.focus();
 };
-
-// 成功动画的 keyframes
-(function injectKeyframes() {
-    if (document.getElementById('recaptcha-anim')) return;
-    const style = document.createElement('style');
-    style.id = 'recaptcha-anim';
-    style.textContent = `
-        @keyframes successPop {
-            0% { transform: scale(0); opacity: 0; }
-            60% { transform: scale(1.15); opacity: 1; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-    `;
-    document.head.appendChild(style);
-})();
 </script>
 </body>
 </html>

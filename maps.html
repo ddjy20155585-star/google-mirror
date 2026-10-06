@@ -64,7 +64,6 @@ html, body { height: 100%; }
 .map-area { flex: 1; position: relative; }
 #map { width: 100%; height: 100%; background: #e5e3df; }
 
-/* 提示条 */
 .banner {
   position: absolute; top: 16px; left: 50%; transform: translateX(-50%);
   background: #fef7e0; color: #b06000;
@@ -74,7 +73,6 @@ html, body { height: 100%; }
 }
 .banner.show { display: block; }
 
-/* 加载中遮罩 */
 .loading-mask {
   position: absolute; inset: 0;
   background: rgba(255,255,255,0.85);
@@ -150,12 +148,13 @@ html, body { height: 100%; }
   const loadingMask = $('loadingMask');
   const loadingText = $('loadingText');
 
-  let currentEngine = null;     // 'google' | 'amap'
-  let googleMap = null;         // google.maps.Map 实例
+  let currentEngine = null;
+  let googleMap = null;
   let googleMarker = null;
-  let leafletMap = null;        // L.Map 实例
+  let googleInfoWindow = null;
+  let leafletMap = null;
   let leafletMarker = null;
-  let amapTile = null;          // 高德瓦片图层
+  let amapTile = null;
 
   function showBanner(text) {
     banner.textContent = text;
@@ -201,7 +200,8 @@ html, body { height: 100%; }
     return new Promise((resolve, reject) => {
       if (window.google && window.google.maps) return resolve();
       const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_KEY}&libraries=places`;
+      // 加 v=weekly + libraries=places，确保 Places API 可用
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_KEY}&libraries=places&v=weekly`;
       script.async = true;
       script.onload = () => resolve();
       script.onerror = () => reject(new Error('Google Maps 脚本加载失败'));
@@ -209,7 +209,7 @@ html, body { height: 100%; }
     });
   }
 
-  // ============ 加载 Leaflet 高德 ============
+  // ============ 加载 Leaflet ============
   function loadLeafletScript() {
     return new Promise((resolve, reject) => {
       if (window.L) return resolve();
@@ -224,10 +224,9 @@ html, body { height: 100%; }
 
   // ============ 销毁现有地图 ============
   function destroyMap() {
-    if (googleMap) {
-      googleMap = null;
-      googleMarker = null;
-    }
+    if (googleMarker) { googleMarker.setMap(null); googleMarker = null; }
+    if (googleInfoWindow) { googleInfoWindow.close(); googleInfoWindow = null; }
+    googleMap = null;
     if (leafletMap) {
       leafletMap.remove();
       leafletMap = null;
@@ -235,7 +234,6 @@ html, body { height: 100%; }
       amapTile = null;
     }
     $('map').innerHTML = '';
-    $('map').removeAttribute('style');
     $('map').style.width = '100%';
     $('map').style.height = '100%';
   }
@@ -257,14 +255,22 @@ html, body { height: 100%; }
     });
   }
 
-  function placeGoogleMarker(lat, lng) {
+  function placeGoogleMarker(lat, lng, title) {
     if (!googleMap) return;
     if (googleMarker) googleMarker.setMap(null);
+    if (googleInfoWindow) { googleInfoWindow.close(); googleInfoWindow = null; }
     googleMarker = new google.maps.Marker({
       position: { lat, lng },
       map: googleMap,
-      animation: google.maps.Animation.DROP
+      animation: google.maps.Animation.DROP,
+      title: title || ''
     });
+    if (title) {
+      googleInfoWindow = new google.maps.InfoWindow({
+        content: '<div style="font-family:Roboto,sans-serif;font-size:14px;padding:4px 8px;color:#202124;">' + title + '</div>'
+      });
+      googleInfoWindow.open(googleMap, googleMarker);
+    }
   }
 
   // ============ 初始化 Leaflet 高德地图 ============
@@ -307,7 +313,6 @@ html, body { height: 100%; }
 
     try {
       if (engine === 'google') {
-        // 先探测能否访问 Google Maps
         const ok = await checkGoogleMaps();
         if (!ok) {
           showBanner('无法访问 Google Maps，已自动切换回高德');
@@ -322,7 +327,6 @@ html, body { height: 100%; }
       console.error(e);
       showBanner('地图加载失败：' + e.message);
       hideLoading();
-      // 如果 Google 失败，自动回退到高德
       if (engine === 'google') {
         setTimeout(() => switchEngine('amap'), 1200);
       }
@@ -335,22 +339,35 @@ html, body { height: 100%; }
     if (!q) { searchInput.focus(); return; }
 
     if (currentEngine === 'google' && googleMap) {
-      // Google：用 Places 或 Geocoding
-      if (window.google.maps.Geocoder) {
-        const geocoder = new google.maps.Geocoder();
-        geocoder.geocode({ address: q }, (results, status) => {
-          if (status === 'OK' && results[0]) {
-            const loc = results[0].geometry.location;
-            googleMap.setCenter(loc);
-            googleMap.setZoom(14);
-            placeGoogleMarker(loc.lat(), loc.lng());
-          } else {
-            showBanner('未找到该地点');
+      showLoading('正在搜索…');
+      try {
+        const { PlacesService } = await google.maps.importLibrary('places');
+        const service = new PlacesService(googleMap);
+        service.textSearch(
+          {
+            query: q,
+            fields: ['name', 'geometry', 'formatted_address']
+          },
+          (results, status) => {
+            hideLoading();
+            if (status === 'OK' && results && results.length > 0) {
+              const place = results[0];
+              const loc = place.geometry.location;
+              googleMap.setCenter(loc);
+              googleMap.setZoom(15);
+              placeGoogleMarker(loc.lat(), loc.lng(), place.name || q);
+            } else {
+              showBanner('未找到该地点（' + status + '）');
+            }
           }
-        });
+        );
+      } catch(e) {
+        console.error('Places 搜索失败：', e);
+        hideLoading();
+        showBanner('搜索失败：' + e.message);
       }
     } else if (currentEngine === 'amap' && leafletMap) {
-      // 高德：用 Nominatim（OSM 免费地理编码）
+      showLoading('正在搜索…');
       try {
         const url = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&accept-language=zh-CN&q=' + encodeURIComponent(q);
         const res = await fetch(url, {
@@ -358,6 +375,7 @@ html, body { height: 100%; }
         });
         if (!res.ok) throw new Error('Nominatim 返回 ' + res.status);
         const list = await res.json();
+        hideLoading();
         if (!list.length) {
           showBanner('未找到该地点');
           return;
@@ -368,6 +386,7 @@ html, body { height: 100%; }
         placeLeafletMarker(lat, lon);
       } catch(e) {
         console.warn('Nominatim 搜索失败：', e);
+        hideLoading();
         showBanner('搜索失败，稍后再试');
       }
     }
@@ -389,7 +408,6 @@ html, body { height: 100%; }
   (async function init() {
     showLoading('正在检测网络…');
 
-    // 用户上次的选择优先
     let savedEngine = null;
     try { savedEngine = localStorage.getItem(STORAGE_ENGINE); } catch(e) {}
 
@@ -398,7 +416,6 @@ html, body { height: 100%; }
       return;
     }
 
-    // 首次打开：自动探测
     const canGoogle = await checkGoogleMaps();
     if (canGoogle) {
       await switchEngine('google');
@@ -407,7 +424,6 @@ html, body { height: 100%; }
     }
   })();
 
-  // 初始聚焦
   window.addEventListener('load', () => searchInput.focus());
 })();
 </script>

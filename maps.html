@@ -13,7 +13,7 @@ html, body { height: 100%; }
 .layout { display: flex; flex-direction: column; height: 100%; }
 
 .top-bar {
-    display: flex; align-items: center; gap: 20px;
+    display: flex; align-items: center; gap: 16px;
     padding: 12px 24px;
     border-bottom: 1px solid #dfe1e5;
     background: #fff; flex-shrink: 0; z-index: 1000;
@@ -21,15 +21,23 @@ html, body { height: 100%; }
 }
 .logo-mini { display: flex; align-items: center; height: 28px; cursor: pointer; flex-shrink: 0; }
 .logo-mini svg { height: 28px; width: auto; display: block; }
+
+/* 搜索区域 */
+.search-area {
+    flex: 1; max-width: 560px; position: relative;
+}
 .search-box {
-    flex: 1; max-width: 560px;
     display: flex; align-items: center;
     background: #fff; border: 1px solid #dfe1e5;
     border-radius: 24px; height: 42px;
     padding: 0 8px 0 16px;
-    transition: box-shadow 0.2s;
+    transition: box-shadow 0.2s, border-radius 0.2s;
 }
 .search-box:hover, .search-box:focus-within {
+    box-shadow: 0 1px 6px rgba(32,33,36,0.28); border-color: transparent;
+}
+.search-box.rounded {
+    border-radius: 24px 24px 0 0;
     box-shadow: 0 1px 6px rgba(32,33,36,0.28); border-color: transparent;
 }
 .search-box input {
@@ -42,10 +50,53 @@ html, body { height: 100%; }
 }
 .search-box .material-icons-outlined:hover { background: rgba(60,64,67,0.08); }
 
-.engine-switch {
-    margin-left: auto; display: flex;
-    background: #f1f3f4; border-radius: 24px; padding: 3px;
+/* 搜索建议下拉 */
+.suggest-list {
+    position: absolute; top: 100%; left: 0; right: 0;
+    background: #fff; border-radius: 0 0 24px 24px;
+    box-shadow: 0 4px 12px rgba(32,33,36,0.18);
+    max-height: 360px; overflow-y: auto;
+    display: none; z-index: 999;
+}
+.suggest-list.open { display: block; }
+.suggest-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 12px 20px; cursor: pointer;
+    transition: background 0.15s;
+}
+.suggest-item:hover, .suggest-item.active { background: rgba(60,64,67,0.08); }
+.suggest-item .material-icons-outlined {
+    font-size: 20px; color: #5f6368; flex-shrink: 0; margin-top: 2px;
+}
+.suggest-item .s-info { flex: 1; min-width: 0; }
+.suggest-item .s-title {
+    font-size: 14px; color: #202124; font-weight: 500;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.suggest-item .s-desc {
+    font-size: 12px; color: #5f6368; margin-top: 2px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.suggest-item .s-info b { font-weight: 700; }
+
+/* 引擎切换 + 定位按钮 */
+.right-tools {
+    margin-left: auto; display: flex; align-items: center; gap: 12px;
     flex-shrink: 0;
+}
+.locate-btn {
+    border: none; background: #f1f3f4; color: #1a73e8;
+    width: 40px; height: 40px; border-radius: 50%;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+}
+.locate-btn:hover { background: #e8eaed; }
+.locate-btn.locating { color: #5f6368; pointer-events: none; }
+.locate-btn .material-icons-outlined { font-size: 22px; }
+
+.engine-switch {
+    display: flex;
+    background: #f1f3f4; border-radius: 24px; padding: 3px;
 }
 .engine-btn {
     border: none; background: transparent;
@@ -90,9 +141,10 @@ html, body { height: 100%; }
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-@media (max-width: 600px) {
-    .top-bar { gap: 10px; padding: 10px 12px; }
+@media (max-width: 700px) {
+    .top-bar { gap: 8px; padding: 10px 12px; }
     .engine-switch { display: none; }
+    .search-area { max-width: none; }
 }
 </style>
 </head>
@@ -111,18 +163,26 @@ html, body { height: 100%; }
             </svg>
         </div>
 
-        <div class="search-box">
-            <input type="text" id="searchInput" placeholder="搜索地点" autocomplete="off">
-            <span class="material-icons-outlined" id="searchBtn">search</span>
+        <div class="search-area">
+            <div class="search-box" id="searchBox">
+                <input type="text" id="searchInput" placeholder="搜索地点" autocomplete="off">
+                <span class="material-icons-outlined" id="searchBtn">search</span>
+            </div>
+            <div class="suggest-list" id="suggestList"></div>
         </div>
 
-        <div class="engine-switch">
-            <button class="engine-btn active" data-engine="google">
-                <span class="material-icons-outlined">public</span>Google
+        <div class="right-tools">
+            <button class="locate-btn" id="locateBtn" title="我的位置">
+                <span class="material-icons-outlined" id="locateIcon">my_location</span>
             </button>
-            <button class="engine-btn" data-engine="amap">
-                <span class="material-icons-outlined">map</span>高德
-            </button>
+            <div class="engine-switch">
+                <button class="engine-btn active" data-engine="google">
+                    <span class="material-icons-outlined">public</span>Google
+                </button>
+                <button class="engine-btn" data-engine="amap">
+                    <span class="material-icons-outlined">map</span>高德
+                </button>
+            </div>
         </div>
     </div>
 
@@ -144,9 +204,13 @@ html, body { height: 100%; }
     const $ = id => document.getElementById(id);
     const searchInput = $('searchInput');
     const searchBtn = $('searchBtn');
+    const searchBox = $('searchBox');
+    const suggestList = $('suggestList');
     const banner = $('banner');
     const loadingMask = $('loadingMask');
     const loadingText = $('loadingText');
+    const locateBtn = $('locateBtn');
+    const locateIcon = $('locateIcon');
 
     let currentEngine = null;
     let googleMap = null;
@@ -154,7 +218,10 @@ html, body { height: 100%; }
     let googleInfoWindow = null;
     let leafletMap = null;
     let leafletMarker = null;
-    let amapTile = null;
+
+    let suggestTimer = null;
+    let suggestItems = [];
+    let suggestActiveIndex = -1;
 
     function showBanner(text) {
         banner.textContent = text;
@@ -167,6 +234,19 @@ html, body { height: 100%; }
     }
     function hideLoading() {
         loadingMask.classList.add('hide');
+    }
+    function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, c => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        })[c]);
+    }
+    function highlightMatch(text, q) {
+        if (!q) return escapeHtml(text);
+        const idx = text.toLowerCase().indexOf(q.toLowerCase());
+        if (idx < 0) return escapeHtml(text);
+        return escapeHtml(text.slice(0, idx)) +
+            '<b>' + escapeHtml(text.slice(idx, idx + q.length)) + '</b>' +
+            escapeHtml(text.slice(idx + q.length));
     }
 
     // ============ 探测 Google Maps 可达性 ============
@@ -230,7 +310,6 @@ html, body { height: 100%; }
             leafletMap.remove();
             leafletMap = null;
             leafletMarker = null;
-            amapTile = null;
         }
         $('map').innerHTML = '';
         $('map').style.width = '100%';
@@ -266,7 +345,7 @@ html, body { height: 100%; }
         });
         if (title) {
             googleInfoWindow = new google.maps.InfoWindow({
-                content: '<div style="font-family:Roboto,sans-serif;font-size:14px;padding:4px 8px;color:#202124;">' + title + '</div>'
+                content: '<div style="font-family:Roboto,sans-serif;font-size:14px;padding:4px 8px;color:#202124;">' + escapeHtml(title) + '</div>'
             });
             googleInfoWindow.open(googleMap, googleMarker);
         }
@@ -276,7 +355,7 @@ html, body { height: 100%; }
     function initLeafletMap() {
         return loadLeafletScript().then(() => {
             leafletMap = L.map('map').setView([39.9042, 116.4074], 12);
-            amapTile = L.tileLayer(
+            L.tileLayer(
                 'https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}',
                 {
                     subdomains: ['1', '2', '3', '4'],
@@ -291,10 +370,11 @@ html, body { height: 100%; }
         });
     }
 
-    function placeLeafletMarker(lat, lng) {
+    function placeLeafletMarker(lat, lng, title) {
         if (!leafletMap) return;
         if (leafletMarker) leafletMap.removeLayer(leafletMarker);
         leafletMarker = L.marker([lat, lng]).addTo(leafletMap);
+        if (title) leafletMarker.bindPopup(escapeHtml(title)).openPopup();
         leafletMap.setView([lat, lng], leafletMap.getZoom());
     }
 
@@ -309,6 +389,7 @@ html, body { height: 100%; }
 
         showLoading(engine === 'google' ? '正在加载 Google Maps…' : '正在加载高德地图…');
         destroyMap();
+        closeSuggest();
 
         try {
             if (engine === 'google') {
@@ -332,10 +413,176 @@ html, body { height: 100%; }
         }
     }
 
-    // ============ 搜索 ============
+    // ============ 搜索建议（Autocomplete） ============
+    async function fetchSuggestions(q) {
+        if (currentEngine !== 'google' || !window.google || !window.google.maps) {
+            // 高德引擎用 Nominatim
+            return fetchAmapSuggestions(q);
+        }
+        try {
+            const { AutocompleteSuggestion, AutocompleteSessionToken } = await google.maps.importLibrary('places');
+            const request = {
+                input: q,
+                language: 'zh-CN',
+                sessionToken: new AutocompleteSessionToken()
+            };
+            const { suggestions } = await AutocompleteSuggestion.fetchAutocompleteSuggestions(request);
+            return (suggestions || []).map(s => {
+                const p = s.placePrediction;
+                return {
+                    title: p && p.mainText ? p.mainText.text : (p ? p.text.text : ''),
+                    desc: p && p.secondaryText ? p.secondaryText.text : '',
+                    placeId: p && p.placeId ? p.placeId : null,
+                    text: p ? p.text.text : ''
+                };
+            });
+        } catch(e) {
+            console.warn('Autocomplete 失败：', e);
+            return [];
+        }
+    }
+
+    async function fetchAmapSuggestions(q) {
+        try {
+            const url = 'https://nominatim.openstreetmap.org/search?format=json&limit=6&accept-language=zh-CN&q=' + encodeURIComponent(q);
+            const res = await fetch(url, {
+                headers: { 'User-Agent': 'Google-Mirror-Map/1.0 (https://ddjy20155585-star.github.io/google-mirror)' }
+            });
+            if (!res.ok) return [];
+            const list = await res.json();
+            return list.map(item => ({
+                title: item.display_name.split(',')[0],
+                desc: item.display_name,
+                lat: parseFloat(item.lat),
+                lng: parseFloat(item.lon)
+            }));
+        } catch(e) {
+            return [];
+        }
+    }
+
+    function renderSuggestList(query) {
+        suggestList.innerHTML = '';
+        suggestActiveIndex = -1;
+        if (!query || suggestItems.length === 0) {
+            closeSuggest();
+            return;
+        }
+        suggestItems.forEach((item, i) => {
+            const el = document.createElement('div');
+            el.className = 'suggest-item';
+            el.innerHTML = `
+                <span class="material-icons-outlined">place</span>
+                <div class="s-info">
+                    <div class="s-title">${highlightMatch(item.title || '', query)}</div>
+                    <div class="s-desc">${escapeHtml(item.desc || '')}</div>
+                </div>
+            `;
+            el.addEventListener('click', () => selectSuggestion(item));
+            suggestList.appendChild(el);
+        });
+        suggestList.classList.add('open');
+        searchBox.classList.add('rounded');
+    }
+
+    function closeSuggest() {
+        suggestList.classList.remove('open');
+        searchBox.classList.remove('rounded');
+        suggestActiveIndex = -1;
+    }
+
+    async function selectSuggestion(item) {
+        searchInput.value = item.title || item.text || '';
+        closeSuggest();
+
+        if (currentEngine === 'google' && googleMap) {
+            showLoading('正在定位…');
+            try {
+                if (item.placeId) {
+                    const { Place } = await google.maps.importLibrary('places');
+                    const place = new Place({ id: item.placeId });
+                    await place.fetchFields({ fields: ['displayName', 'location', 'formattedAddress'] });
+                    hideLoading();
+                    if (place.location) {
+                        const lat = place.location.lat();
+                        const lng = place.location.lng();
+                        googleMap.setCenter({ lat, lng });
+                        googleMap.setZoom(15);
+                        placeGoogleMarker(lat, lng, place.displayName || item.title);
+                    }
+                } else {
+                    // 直接按文本搜
+                    hideLoading();
+                    doSearch();
+                }
+            } catch(e) {
+                hideLoading();
+                showBanner('定位失败：' + e.message);
+            }
+        } else if (currentEngine === 'amap' && leafletMap) {
+            if (item.lat && item.lng) {
+                leafletMap.setView([item.lat, item.lng], 14);
+                placeLeafletMarker(item.lat, item.lng, item.title);
+            }
+        }
+    }
+
+    // ============ 输入事件 ============
+    searchInput.addEventListener('input', () => {
+        if (suggestTimer) clearTimeout(suggestTimer);
+        const q = searchInput.value.trim();
+        if (!q) {
+            suggestItems = [];
+            closeSuggest();
+            return;
+        }
+        suggestTimer = setTimeout(async () => {
+            suggestItems = await fetchSuggestions(q);
+            renderSuggestList(q);
+        }, 200);
+    });
+
+    searchInput.addEventListener('focus', () => {
+        if (searchInput.value.trim() && suggestItems.length > 0) {
+            renderSuggestList(searchInput.value.trim());
+        }
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.search-area')) closeSuggest();
+    });
+
+    // 键盘导航
+    searchInput.addEventListener('keydown', (e) => {
+        const items = suggestList.querySelectorAll('.suggest-item');
+        if (e.key === 'ArrowDown') {
+            if (items.length === 0) return;
+            e.preventDefault();
+            suggestActiveIndex = (suggestActiveIndex + 1) % items.length;
+            items.forEach((it, i) => it.classList.toggle('active', i === suggestActiveIndex));
+        } else if (e.key === 'ArrowUp') {
+            if (items.length === 0) return;
+            e.preventDefault();
+            suggestActiveIndex = (suggestActiveIndex - 1 + items.length) % items.length;
+            items.forEach((it, i) => it.classList.toggle('active', i === suggestActiveIndex));
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (suggestActiveIndex >= 0 && suggestItems[suggestActiveIndex]) {
+                selectSuggestion(suggestItems[suggestActiveIndex]);
+            } else {
+                closeSuggest();
+                doSearch();
+            }
+        } else if (e.key === 'Escape') {
+            closeSuggest();
+        }
+    });
+
+    // ============ 搜索（无建议时直接搜） ============
     async function doSearch() {
         const q = searchInput.value.trim();
         if (!q) { searchInput.focus(); return; }
+        closeSuggest();
 
         if (currentEngine === 'google' && googleMap) {
             showLoading('正在搜索…');
@@ -379,9 +626,8 @@ html, body { height: 100%; }
                 const lat = parseFloat(list[0].lat);
                 const lon = parseFloat(list[0].lon);
                 leafletMap.setView([lat, lon], 14);
-                placeLeafletMarker(lat, lon);
+                placeLeafletMarker(lat, lon, list[0].display_name.split(',')[0]);
             } catch(e) {
-                console.warn('Nominatim 搜索失败：', e);
                 hideLoading();
                 showBanner('搜索失败，稍后再试');
             }
@@ -389,8 +635,42 @@ html, body { height: 100%; }
     }
 
     searchBtn.addEventListener('click', doSearch);
-    searchInput.addEventListener('keydown', e => {
-        if (e.key === 'Enter') doSearch();
+
+    // ============ 我的位置 ============
+    locateBtn.addEventListener('click', () => {
+        if (!navigator.geolocation) {
+            showBanner('浏览器不支持定位');
+            return;
+        }
+        locateIcon.textContent = 'hourglass_empty';
+        locateBtn.classList.add('locating');
+
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                locateIcon.textContent = 'my_location';
+                locateBtn.classList.remove('locating');
+                const lat = pos.coords.latitude;
+                const lng = pos.coords.longitude;
+                if (currentEngine === 'google' && googleMap) {
+                    googleMap.setCenter({ lat, lng });
+                    googleMap.setZoom(15);
+                    placeGoogleMarker(lat, lng, '我的位置');
+                } else if (currentEngine === 'amap' && leafletMap) {
+                    leafletMap.setView([lat, lng], 15);
+                    placeLeafletMarker(lat, lng, '我的位置');
+                }
+            },
+            (err) => {
+                locateIcon.textContent = 'my_location';
+                locateBtn.classList.remove('locating');
+                let msg = '定位失败';
+                if (err.code === 1) msg = '定位权限被拒绝';
+                else if (err.code === 2) msg = '定位不可用';
+                else if (err.code === 3) msg = '定位超时';
+                showBanner(msg);
+            },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+        );
     });
 
     // ============ 引擎切换按钮 ============

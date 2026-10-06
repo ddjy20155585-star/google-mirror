@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Google 镜像站 · 知识图谱</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Roboto', arial, sans-serif; }
+:root {
+  --bg: #fff; --text: #202124; --text-secondary: #5f6368;
+  --border: #dfe1e5; --hover: rgba(60,64,67,0.08); --card-bg: #fff;
+  --blue: #1a73e8;
+}
+body.dark {
+  --bg: #202124; --text: #e8eaed; --text-secondary: #9aa0a6;
+  --border: #5f6368; --hover: rgba(232,234,237,0.08); --card-bg: #292a2d;
+}
+body {
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; display: flex; flex-direction: column;
+  transition: background 0.4s, color 0.4s;
+}
+.top-bar {
+  display: flex; align-items: center; gap: 16px;
+  padding: 14px 30px; border-bottom: 1px solid var(--border);
+  background: var(--bg); position: sticky; top: 0; z-index: 100;
+}
+.logo-mini { display: flex; align-items: center; height: 28px; cursor: pointer; }
+.logo-mini svg { height: 28px; width: auto; }
+.page-title {
+  font-size: 20px; font-weight: 500;
+  display: flex; align-items: center; gap: 6px;
+}
+.page-title .material-icons-outlined { font-size: 24px; color: var(--blue); }
+.top-spacer { flex: 1; }
+.theme-toggle {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: transparent; border: none;
+  color: var(--text-secondary); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.theme-toggle:hover { background: var(--hover); }
+.main { flex: 1; padding: 30px; max-width: 900px; width: 100%; margin: 0 auto; }
+
+/* 搜索框 */
+.search-box {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--card-bg); border: 1px solid var(--border);
+  border-radius: 24px; height: 48px;
+  padding: 0 6px 0 18px; margin-bottom: 24px;
+  transition: box-shadow 0.2s;
+}
+.search-box:focus-within {
+  box-shadow: 0 1px 6px rgba(32,33,36,0.28);
+  border-color: transparent;
+}
+.search-box .material-icons-outlined { font-size: 22px; color: var(--text-secondary); }
+.search-box input {
+  flex: 1; border: none; outline: none; background: transparent;
+  font-size: 15px; color: var(--text); height: 100%;
+}
+.search-box button {
+  background: var(--blue); color: #fff; border: none;
+  padding: 10px 24px; border-radius: 20px;
+  font-size: 14px; font-weight: 500; cursor: pointer;
+  transition: background 0.15s;
+}
+.search-box button:hover { background: #1b66c9; }
+.search-box button:disabled { background: var(--border); cursor: not-allowed; }
+
+/* 知识卡片 */
+.result-card {
+  background: var(--card-bg); border-radius: 12px;
+  padding: 24px; margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  display: flex; gap: 20px;
+  opacity: 0; animation: fadeUp 0.4s ease forwards;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.result-card .thumb {
+  width: 100px; height: 100px; border-radius: 8px;
+  object-fit: cover; flex-shrink: 0;
+  background: var(--hover);
+}
+.result-card .thumb-placeholder {
+  width: 100px; height: 100px; border-radius: 8px;
+  background: var(--hover); color: var(--text-secondary);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.result-card .thumb-placeholder .material-icons-outlined { font-size: 40px; }
+.result-card .info { flex: 1; min-width: 0; }
+.result-card .name {
+  font-size: 20px; font-weight: 500; color: var(--text);
+  margin-bottom: 6px;
+}
+.result-card .types {
+  font-size: 12px; color: var(--text-secondary);
+  margin-bottom: 10px;
+  display: flex; gap: 8px; flex-wrap: wrap;
+}
+.result-card .type-tag {
+  background: var(--hover); padding: 2px 8px;
+  border-radius: 10px; white-space: nowrap;
+}
+.result-card .desc {
+  font-size: 14px; color: var(--text); line-height: 1.6;
+  margin-bottom: 12px;
+}
+.result-card .desc a {
+  color: var(--blue); text-decoration: none;
+}
+.result-card .desc a:hover { text-decoration: underline; }
+.result-card .url {
+  font-size: 13px; color: var(--blue);
+  text-decoration: none; word-break: break-all;
+}
+.result-card .url:hover { text-decoration: underline; }
+
+/* 加载 / 错误 / 空 */
+.loading, .error-box, .empty {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; padding: 60px 20px; gap: 16px;
+  color: var(--text-secondary); font-size: 14px;
+}
+.spinner {
+  width: 40px; height: 40px;
+  border: 4px solid var(--hover); border-top-color: var(--blue);
+  border-radius: 50%; animation: spin 0.9s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 600px) {
+  .top-bar { padding: 12px 16px; gap: 10px; }
+  .page-title { font-size: 16px; }
+  .main { padding: 16px; }
+  .result-card { flex-direction: column; align-items: center; text-align: center; }
+  .result-card .types { justify-content: center; }
+}
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="logo-mini" onclick="location.href='index.html'">
+    <svg viewBox="0 0 272 92" xmlns="http://www.w3.org/2000/svg">
+      <path fill="#4285F4" d="M115.75 47.18c0 12.77-9.99 22.18-22.25 22.18s-22.25-9.41-22.25-22.18C71.25 34.32 81.24 25 93.5 25s22.25 9.32 22.25 22.18zm-9.74 0c0-7.98-5.79-13.44-12.51-13.44S80.99 39.2 80.99 47.18c0 7.9 5.79 13.44 12.51 13.44s12.51-5.55 12.51-13.44z"/>
+      <path fill="#EA4335" d="M163.75 47.18c0 12.77-9.99 22.18-22.25 22.18s-22.25-9.41-22.25-22.18c0-12.85 9.99-22.18 22.25-22.18s22.25 9.32 22.25 22.18zm-9.74 0c0-7.98-5.79-13.44-12.51-13.44s-12.51 5.46-12.51 13.44c0 7.9 5.79 13.44 12.51 13.44s12.51-5.55 12.51-13.44z"/>
+      <path fill="#FBBC05" d="M209.75 26.34v39.82c0 16.38-9.66 23.07-21.08 23.07-10.75 0-17.22-7.19-19.66-13.07l8.48-3.53c1.51 3.61 5.21 7.87 11.17 7.87 7.31 0 11.84-4.51 11.84-13v-3.19h-.34c-2.18 2.69-6.38 5.04-11.68 5.04-11.09 0-21.25-9.66-21.25-22.09 0-12.52 10.16-22.26 21.25-22.26 5.29 0 9.49 2.35 11.68 4.96h.34v-3.61h9.25zm-8.56 20.92c0-7.81-5.21-13.52-11.84-13.52-6.72 0-12.35 5.71-12.35 13.52 0 7.73 5.63 13.36 12.35 13.36 6.63 0 11.84-5.63 11.84-13.36z"/>
+      <path fill="#34A853" d="M225 3v65h-9.5V3h9.5z"/>
+      <path fill="#4285F4" d="M262.02 54.48l7.56 5.04c-2.44 3.61-8.32 9.83-18.48 9.83-12.6 0-22.01-9.74-22.01-22.18 0-13.19 9.49-22.18 20.92-22.18 11.51 0 17.14 9.16 18.98 14.11l1.01 2.52-29.65 12.28c2.27 4.45 5.8 6.72 10.75 6.72 4.96 0 8.4-2.44 10.92-6.14zm-23.27-7.98l19.82-8.23c-1.09-2.77-4.37-4.7-8.23-4.7-4.95 0-11.84 4.37-11.59 12.93z"/>
+      <path fill="#EA4335" d="M35.29 41.41V32H67c.31 1.64.47 3.58.47 5.68 0 7.06-1.93 15.79-8.15 22.01-6.05 6.3-13.78 9.66-24.02 9.66C16.32 69.35.36 53.89.36 34.91.36 15.93 16.32.47 35.3.47c10.5 0 17.98 4.12 23.6 9.49l-6.64 6.64c-4.03-3.78-9.49-6.72-16.97-6.72-13.86 0-24.7 11.17-24.7 25.03 0 13.86 10.84 25.03 24.7 25.03 8.99 0 14.11-3.61 17.39-6.89 2.66-2.66 4.41-6.46 5.1-11.65l-22.49.01z"/>
+    </svg>
+  </div>
+  <div class="page-title">
+    <span class="material-icons-outlined">auto_awesome</span>
+    知识图谱
+  </div>
+  <div class="top-spacer"></div>
+  <button class="theme-toggle" id="themeToggle" title="切换深色模式">
+    <span class="material-icons-outlined" id="themeIcon">dark_mode</span>
+  </button>
+</div>
+
+<div class="main">
+  <div class="search-box">
+    <span class="material-icons-outlined">search</span>
+    <input type="text" id="searchInput" placeholder="搜索实体，如：爱因斯坦、故宫、Python" autocomplete="off">
+    <button id="searchBtn">查询</button>
+  </div>
+  <div id="result"></div>
+</div>
+
+<script>
+(function() {
+  const API_KEY = 'AIzaSyAj4KuKVj6-5uCueKwbuAS7pcrkinp0ajw';
+  const API_BASE = 'https://kgsearch.googleapis.com/v1/entities:search';
+
+  const $ = id => document.getElementById(id);
+  const searchInput = $('searchInput');
+  const searchBtn = $('searchBtn');
+  const result = $('result');
+  const themeToggle = $('themeToggle');
+  const themeIcon = $('themeIcon');
+
+  function applyTheme(t) {
+    if (t === 'dark') { document.body.classList.add('dark'); themeIcon.textContent = 'light_mode'; }
+    else { document.body.classList.remove('dark'); themeIcon.textContent = 'dark_mode'; }
+  }
+  try { applyTheme(JSON.parse(localStorage.getItem('gm_theme')) || 'light'); } catch(e) { applyTheme('light'); }
+  themeToggle.addEventListener('click', () => {
+    const t = document.body.classList.contains('dark') ? 'light' : 'dark';
+    applyTheme(t);
+    try { localStorage.setItem('gm_theme', JSON.stringify(t)); } catch(e) {}
+  });
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[c]);
+  }
+
+  // 把带 <a> 标签的描述转为安全的链接
+  function renderDescription(html) {
+    if (!html) return '';
+    // 只保留 <a href="...">text</a>，其它标签转义
+    const safe = html.replace(/<(?!\/?a\b)[^>]*>/g, '');
+    return safe.replace(/<a\s+href="([^"]+)"[^>]*>(.*?)<\/a>/g, (m, url, text) => {
+      return `<a href="${escapeHtml(url)}" target="_blank" rel="noopener">${escapeHtml(text)}</a>`;
+    });
+  }
+
+  function renderEntity(item) {
+    const r = item.result || {};
+    const score = item.resultScore || 0;
+    const name = r.name || '未命名';
+    const desc = r.detailedDescription?.articleBody || r.description || '';
+    const descUrl = r.detailedDescription?.url || '';
+    const imageUrl = r.image?.contentUrl || '';
+    const officialUrl = r.url || '';
+    const types = (r['@type'] || []).slice(0, 3);
+
+    let thumbHtml;
+    if (imageUrl) {
+      thumbHtml = `<img class="thumb" src="${escapeHtml(imageUrl)}" alt="" onerror="this.outerHTML='<div class=\\'thumb-placeholder\\'><span class=\\'material-icons-outlined\\'>auto_awesome</span></div>'">`;
+    } else {
+      thumbHtml = `<div class="thumb-placeholder"><span class="material-icons-outlined">auto_awesome</span></div>`;
+    }
+
+    const typesHtml = types.length
+      ? `<div class="types">${types.map(t => `<span class="type-tag">${escapeHtml(t)}</span>`).join('')}</div>`
+      : '';
+
+    let descHtml = '';
+    if (desc) {
+      const descText = renderDescription(desc);
+      descHtml = `<div class="desc">${descText}${descUrl ? ` <a href="${escapeHtml(descUrl)}" target="_blank" rel="noopener">[更多]</a>` : ''}</div>`;
+    }
+
+    const urlHtml = officialUrl
+      ? `<a class="url" href="${escapeHtml(officialUrl)}" target="_blank" rel="noopener">${escapeHtml(officialUrl)}</a>`
+      : '';
+
+    return `
+      <div class="result-card">
+        ${thumbHtml}
+        <div class="info">
+          <div class="name">${escapeHtml(name)}</div>
+          ${typesHtml}
+          ${descHtml}
+          ${urlHtml}
+        </div>
+      </div>
+    `;
+  }
+
+  async function search() {
+    const q = searchInput.value.trim();
+    if (!q) { searchInput.focus(); return; }
+
+    searchBtn.disabled = true;
+    result.innerHTML = '<div class="loading"><div class="spinner"></div>查询中…</div>';
+
+    try {
+      const url = `${API_BASE}?query=${encodeURIComponent(q)}&limit=5&indent=true&key=${API_KEY}`;
+      const res = await fetch(url);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error?.message || `请求失败 (${res.status})`);
+      }
+      const data = await res.json();
+      const items = data.itemListElement || [];
+      if (items.length === 0) {
+        result.innerHTML = `
+          <div class="empty">
+            <span class="material-icons-outlined" style="font-size:48px;opacity:0.5;">search_off</span>
+            <div>没有找到相关的知识卡片</div>
+            <div style="font-size:12px;">试试输入更具体的实体名（如“爱因斯坦”“故宫”）</div>
+          </div>
+        `;
+        return;
+      }
+      result.innerHTML = items.map(renderEntity).join('');
+    } catch(e) {
+      console.error(e);
+      result.innerHTML = `
+        <div class="error-box">
+          <span class="material-icons-outlined" style="font-size:48px;color:#d93025;">error_outline</span>
+          <div>查询失败：${escapeHtml(e.message)}</div>
+          <div style="font-size:12px;color:var(--text-secondary);max-width:500px;text-align:center;line-height:1.6;">
+            可能原因：API Key 无效、Knowledge Graph Search API 未启用、或配额用完。
+          </div>
+        </div>
+      `;
+    } finally {
+      searchBtn.disabled = false;
+    }
+  }
+
+  searchBtn.addEventListener('click', search);
+  searchInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') search();
+  });
+  searchInput.focus();
+})();
+</script>
+</body>
+</html>
